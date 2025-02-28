@@ -39,6 +39,16 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 ]
 
+SECONDARY_APPS = [
+    'lol',
+]
+
+THIRD_APPS = [
+    'rest_framework',
+]
+
+INSTALLED_APPS += SECONDARY_APPS + THIRD_APPS
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
