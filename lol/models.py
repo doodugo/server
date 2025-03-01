@@ -12,6 +12,7 @@ class Champion(models.Model):
         blank=False,
     )
     image_url = models.CharField(max_length=200)
+    ban_count = models.IntegerField(default=0)
 
     def __str__(self):
         return self.name
@@ -97,9 +98,32 @@ class SupportChampion(PositionChampion):
     )
 
 
-class TeamComposition(models.Model):
-    """Team composition model representing a 5-champion team setup."""
+class Match(models.Model):
+    """Match history for reference."""
+    date = models.DateField()
+    patch = models.CharField(max_length=10)
+    blue_team = models.CharField(max_length=100)
+    red_team = models.CharField(max_length=100)
+    winner = models.CharField(max_length=100)
+    created_at = models.DateTimeField(auto_now_add=True)
 
+    def __str__(self):
+        return f"{self.date} - {self.blue_team} vs {self.red_team}"
+
+
+class MatchComposition(models.Model):
+    """Link between Match and TeamComposition."""
+    match = models.ForeignKey(Match, on_delete=models.CASCADE)
+    composition = models.ForeignKey('TeamComposition', on_delete=models.CASCADE)
+    is_blue_side = models.BooleanField()
+    is_winner = models.BooleanField()
+
+    class Meta:
+        unique_together = ['match', 'is_blue_side']
+
+
+class TeamComposition(models.Model):
+    """Team composition model focusing on champion combinations."""
     top = models.ForeignKey(
         TopChampion,
         on_delete=models.CASCADE,
@@ -140,7 +164,6 @@ class TeamComposition(models.Model):
 
     @property
     def win_rate(self):
-        """Calculate team composition win rate percentage."""
         if self.pick_count == 0:
             return 0
         return (self.win_count / self.pick_count) * 100
