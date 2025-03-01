@@ -98,13 +98,35 @@ class SupportChampion(PositionChampion):
     )
 
 
+class Team(models.Model):
+    """Team model representing a League of Legends team."""
+
+    name = models.CharField(max_length=100, unique=True)
+    image_url = models.CharField(max_length=200)
+
+    def __str__(self):
+        return self.name
+
+
 class Match(models.Model):
     """Match history for reference."""
     date = models.DateField()
     patch = models.CharField(max_length=10)
-    blue_team = models.CharField(max_length=100)
-    red_team = models.CharField(max_length=100)
-    winner = models.CharField(max_length=100)
+    blue_team = models.ForeignKey(
+        Team,
+        on_delete=models.DO_NOTHING,
+        related_name="blue_team_matches"
+    )
+    red_team = models.ForeignKey(
+        Team,
+        on_delete=models.DO_NOTHING,
+        related_name="red_team_matches"
+    )
+    winner = models.ForeignKey(
+        Team,
+        on_delete=models.DO_NOTHING,
+        related_name="winner_matches"
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
