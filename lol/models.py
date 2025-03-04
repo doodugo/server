@@ -46,55 +46,50 @@ class PositionChampion(models.Model):
 class TopChampion(PositionChampion):
     """Top lane champion statistics."""
 
-    champion = models.ForeignKey(
+    champion = models.OneToOneField(
         Champion,
-        on_delete=models.DO_NOTHING,
+        on_delete=models.CASCADE,
         related_name="top_champion",
-        unique=True,
     )
 
 
 class JungleChampion(PositionChampion):
     """Jungle position champion statistics."""
 
-    champion = models.ForeignKey(
+    champion = models.OneToOneField(
         Champion,
-        on_delete=models.DO_NOTHING,
+        on_delete=models.CASCADE,
         related_name="jungle_champion",
-        unique=True,
     )
 
 
 class MidChampion(PositionChampion):
     """Mid lane champion statistics."""
 
-    champion = models.ForeignKey(
+    champion = models.OneToOneField(
         Champion,
-        on_delete=models.DO_NOTHING,
+        on_delete=models.CASCADE,
         related_name="mid_champion",
-        unique=True,
     )
 
 
-class AdCarryChampion(PositionChampion):
+class AdCarryChampion(models.Model):
     """AD Carry champion statistics."""
 
-    champion = models.ForeignKey(
+    champion = models.OneToOneField(
         Champion,
-        on_delete=models.DO_NOTHING,
-        related_name="ad_carry_champion",
-        unique=True,
+        on_delete=models.CASCADE,
+        related_name='adc_champion'
     )
 
 
 class SupportChampion(PositionChampion):
     """Support champion statistics."""
 
-    champion = models.ForeignKey(
+    champion = models.OneToOneField(
         Champion,
-        on_delete=models.DO_NOTHING,
+        on_delete=models.CASCADE,
         related_name="support_champion",
-        unique=True,
     )
 
 
@@ -111,6 +106,7 @@ class Team(models.Model):
 class Match(models.Model):
     """Match history for reference."""
     date = models.DateField()
+    sets = models.IntegerField(default=0)
     patch = models.CharField(max_length=10)
     blue_team = models.ForeignKey(
         Team,
