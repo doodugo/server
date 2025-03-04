@@ -16,6 +16,7 @@ services:
     command: >
       sh -c "python manage.py runserver 0.0.0.0:8000"
     environment:
+      - DJANGO_SETTINGS_MODULE=core.settings
       - DB_HOST=db
       - DB_NAME=devdb
       - DB_USER=devuser
