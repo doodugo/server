@@ -45,6 +45,7 @@ SECONDARY_APPS = [
 
 THIRD_APPS = [
     'rest_framework',
+    # 'debug_toolbar',
 ]
 
 INSTALLED_APPS += SECONDARY_APPS + THIRD_APPS
@@ -58,6 +59,9 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+if DEBUG:
+    MIDDLEWARE += ['debug_toolbar.middleware.DebugToolbarMiddleware']
 
 ROOT_URLCONF = 'core.urls'
 
@@ -75,6 +79,13 @@ TEMPLATES = [
             ],
         },
     },
+]
+
+INTERNAL_IPS = [
+    '127.0.0.1',
+    'localhost',
+    '0.0.0.0',
+    '172.18.0.1',
 ]
 
 WSGI_APPLICATION = 'core.wsgi.application'

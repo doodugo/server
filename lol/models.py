@@ -108,18 +108,30 @@ class Match(models.Model):
     date = models.DateField()
     sets = models.IntegerField(default=0)
     patch = models.CharField(max_length=10)
+    blue_composition = models.ForeignKey(
+        to='TeamComposition',
+        on_delete=models.DO_NOTHING,
+        related_name="blue_team_matches",
+        null=True
+    )
+    red_composition = models.ForeignKey(
+        to='TeamComposition',
+        on_delete=models.DO_NOTHING,
+        related_name="red_team_matches",
+        null=True
+    )
     blue_team = models.ForeignKey(
-        Team,
+        to='Team',
         on_delete=models.DO_NOTHING,
         related_name="blue_team_matches"
     )
     red_team = models.ForeignKey(
-        Team,
+        to='Team',
         on_delete=models.DO_NOTHING,
         related_name="red_team_matches"
     )
     winner = models.ForeignKey(
-        Team,
+        to='Team',
         on_delete=models.DO_NOTHING,
         related_name="winner_matches"
     )
@@ -127,17 +139,6 @@ class Match(models.Model):
 
     def __str__(self):
         return f"{self.date} - {self.blue_team} vs {self.red_team}"
-
-
-class MatchComposition(models.Model):
-    """Link between Match and TeamComposition."""
-    match = models.ForeignKey(Match, on_delete=models.CASCADE)
-    composition = models.ForeignKey('TeamComposition', on_delete=models.CASCADE)
-    is_blue_side = models.BooleanField()
-    is_winner = models.BooleanField()
-
-    class Meta:
-        unique_together = ['match', 'is_blue_side']
 
 
 class TeamComposition(models.Model):

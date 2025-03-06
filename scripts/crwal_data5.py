@@ -10,7 +10,7 @@ import os
 import sys
 import django
 from django.conf import settings
-
+# docker-compose run --rm app sh -c "python manage.py runserver 0.0.0.0:8000"
 # 프로젝트 루트 디렉토리를 Python 경로에 추가
 current_dir = os.path.dirname(os.path.abspath(__file__))
 server_dir = os.path.dirname(current_dir)
@@ -40,6 +40,7 @@ for row in rows[3:4]:
         continue
     # 날짜
     date_td = row.select_one('td:nth-child(1)')
+    match_id_td = row.select_one('td:nth-child(6)')
     match, created, winner_check = process_match_data(row)
 
     if created:

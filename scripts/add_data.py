@@ -1,6 +1,5 @@
 import os
 import django
-import requests
 from bs4 import BeautifulSoup
 from datetime import datetime
 from django.db.models import F

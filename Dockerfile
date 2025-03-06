@@ -12,6 +12,7 @@ RUN apk add --update --no-cache postgresql-client && \
 
 ARG DEV=false
 ENV DEV=${DEV}
+ENV DJANGO_DEBUG=True
 
 # 먼저 requirements 파일들만 복사
 COPY ./requirements.txt /tmp/requirements.txt
