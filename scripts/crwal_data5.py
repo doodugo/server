@@ -1,3 +1,4 @@
+# docker compose run --rm app sh -c "python scripts/crwal_data5.py"
 import requests
 from bs4 import BeautifulSoup
 import os
@@ -35,16 +36,16 @@ else:
     rows = []
 
 print(len(rows))
-for row in rows[3:4]:
+for row in rows[3:]:
     if row.get('class') == ['mhgame-blue']:
         continue
     # 날짜
     date_td = row.select_one('td:nth-child(1)')
     match_id_td = row.select_one('td:nth-child(6)')
-    match, created, winner_check = process_match_data(row)
+    match, created = process_match_data(row)
 
-    if created:
-        blue_champions, red_champions = process_pick_data(row, winner_check)
+    # if created:
+    #     blue_champions, red_champions = process_pick_data(row, winner_check)
 
     # TODO 플레이어 추가
     # # 플레이어 (a 태그 텍스트 추출)

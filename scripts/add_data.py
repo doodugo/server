@@ -22,7 +22,7 @@ def process_match_data(row) -> tuple[Match, bool, str]:
             '%Y-%m-%d'
         ).date()
         patch = row.select_one('td:nth-child(2)').get_text().strip()
-        
+
         blue_team_td = row.select_one('td:nth-child(3)')
         blue_team_name = blue_team_td.select_one('a img').get('alt').replace('std', '').strip()
         red_team_td = row.select_one('td:nth-child(4)')
@@ -38,11 +38,14 @@ def process_match_data(row) -> tuple[Match, bool, str]:
             name=red_team_name,
         )
         print('팀 디버깅:', blue_team, red_team)
+
         winner = blue_team if winner_name == blue_team_name else red_team
+
         blue_td = row.select_one('td:nth-child(8)')
         red_td = row.select_one('td:nth-child(9)')
-        winner_check = 'blue' if winner == blue_team else 'red'
-        blue_team_composition, red_team_composition = process_pick_data(blue_td, red_td, winner_check)
+
+        blue_team_composition, red_team_composition = process_pick_data(blue_td, red_td)
+        print('process_pick_data 종료')
 
         match, created = Match.objects.get_or_create(
             date=date,
@@ -56,9 +59,17 @@ def process_match_data(row) -> tuple[Match, bool, str]:
 
         if created:
             print(f"Created match: {match}")
+            blue_team_composition.pick_count = F('pick_count') + 1
+            red_team_composition.pick_count = F('pick_count') + 1
+            if winner == blue_team:
+                blue_team_composition.win_count = F('win_count') + 1
+            else:
+                red_team_composition.win_count = F('win_count') + 1
+            blue_team_composition.save()
+            red_team_composition.save()
         else:
             print(f"Match already exists: {match}")
-        return match, created, winner_check
+        return match, created
 
     except AttributeError as e:
         print(f"HTML 파싱 오류: {e}")
@@ -76,13 +87,16 @@ def create_role_champions(champions_obj):
     role_classes = [TopChampion, JungleChampion, MidChampion, AdCarryChampion, SupportChampion]
 
     for champion_obj, role_class in zip(champions_obj, role_classes):
-        print(f"Creating {role_class.__name__} for {champion_obj.name}")
-        role_obj, _ = role_class.objects.get_or_create(champion=champion_obj)
+        role_obj, created = role_class.objects.get_or_create(champion=champion_obj)
+        if created:
+            print(f"Created {role_class.__name__} for {champion_obj.name}")
+        else:
+            print(f"Role object already exists for {role_class.__name__} {champion_obj.name}")
         role_objects.append(role_obj)
 
     return role_objects
 
-def process_pick_data(blue_td, red_td, winner_check):
+def process_pick_data(blue_td, red_td):
     print('process_pick_data 시작')
     blue_champions = []
     red_champions = []
@@ -108,7 +122,11 @@ def process_pick_data(blue_td, red_td, winner_check):
         blue_role_objects = create_role_champions(blue_champions)
         red_role_objects = create_role_champions(red_champions)
 
+        print("Blue Team Composition:", blue_role_objects)
+        print("Red Team Composition:", red_role_objects)
+
         # 팀 구성 생성
+        print('팀 구성 생성 시작')
         blue_team_composition, _ = TeamComposition.objects.get_or_create(
             top=blue_role_objects[0],
             jungle=blue_role_objects[1],
@@ -116,7 +134,7 @@ def process_pick_data(blue_td, red_td, winner_check):
             adc=blue_role_objects[3],
             support=blue_role_objects[4],
         )
-
+        print('Blue Team Composition:', blue_team_composition)
         red_team_composition, _ = TeamComposition.objects.get_or_create(
             top=red_role_objects[0],
             jungle=red_role_objects[1],
@@ -124,16 +142,8 @@ def process_pick_data(blue_td, red_td, winner_check):
             adc=red_role_objects[3],
             support=red_role_objects[4],
         )
+        print('Red Team Composition:', red_team_composition)
 
         # 벌크 업데이트를 위해 F() 표현식 사용
-        TeamComposition.objects.filter(id=blue_team_composition.id).update(
-            pick_count=F('pick_count') + 1,
-            win_count=F('win_count') + 1 if winner_check == 'blue' else F('win_count')
-        )
 
-        TeamComposition.objects.filter(id=red_team_composition.id).update(
-            pick_count=F('pick_count') + 1,
-            win_count=F('win_count') + 1 if winner_check == 'red' else F('win_count')
-        )
-
-    return blue_champions, red_champions
+    return blue_team_composition, red_team_composition
