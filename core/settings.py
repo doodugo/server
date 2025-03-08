@@ -45,7 +45,8 @@ SECONDARY_APPS = [
 
 THIRD_APPS = [
     'rest_framework',
-    # 'debug_toolbar',
+    'debug_toolbar',
+    'drf_spectacular',
 ]
 
 INSTALLED_APPS += SECONDARY_APPS + THIRD_APPS
@@ -120,6 +121,9 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+REST_FRAMEWORK = {
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+}
 
 # Internationalization
 # https://docs.djangoproject.com/en/4.2/topics/i18n/
