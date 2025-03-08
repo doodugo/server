@@ -1,8 +1,8 @@
 # server/lol/views.py
 from rest_framework import viewsets
 from rest_framework.response import Response
-from .models import TeamComposition
-from .serializers import TeamCompositionSerializer
+from .models import Champion, TeamComposition
+from .serializers import ChampionSerializer, TeamCompositionSerializer
 
 class TeamCompositionViewSet(viewsets.ModelViewSet):
     """ViewSet for TeamComposition model."""
@@ -34,4 +34,16 @@ class TeamCompositionViewSet(viewsets.ModelViewSet):
         top_compositions = queryset.order_by('-pick_count', '-win_count')[:3]
 
         serializer = self.get_serializer(top_compositions, many=True)
+        return Response(serializer.data)
+
+
+#TODO 언어를 쿠키에 넣고 체크 후 나라 별 챔피언 이름으로 정렬 기능
+class ChampionViewSet(viewsets.ModelViewSet):
+    """ViewSet for Champion model."""
+    queryset = Champion.objects.order_by('name')
+    serializer_class = ChampionSerializer
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
