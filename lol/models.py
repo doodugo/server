@@ -141,6 +141,7 @@ class Match(models.Model):
         return f"{self.date} - {self.blue_team} vs {self.red_team}"
 
 
+# TODO created_at, update_at
 class TeamComposition(models.Model):
     """Team composition model focusing on champion combinations."""
     top = models.ForeignKey(
