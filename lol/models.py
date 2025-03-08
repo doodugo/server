@@ -73,7 +73,7 @@ class MidChampion(PositionChampion):
     )
 
 
-class AdCarryChampion(models.Model):
+class AdCarryChampion(PositionChampion):
     """AD Carry champion statistics."""
 
     champion = models.OneToOneField(
