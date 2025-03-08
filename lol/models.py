@@ -11,6 +11,12 @@ class Champion(models.Model):
         null=False,
         blank=False,
     )
+    name_ko = models.CharField(
+        max_length=20,
+        unique=True,
+        null=True,
+        blank=True,
+    )
     image_url = models.CharField(max_length=200)
     ban_count = models.IntegerField(default=0)
 
