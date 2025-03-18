@@ -10,31 +10,32 @@ class TeamCompositionViewSet(viewsets.ModelViewSet):
     queryset = TeamComposition.objects.all()
     serializer_class = TeamCompositionSerializer
 
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        champion_ids = self.get_champion_ids()
+        return self.filter_team_compositions(queryset, champion_ids)
+
+    def get_champion_ids(self):
+        """챔피언 ID를 가져오는 함수."""
+        return {
+            'top': self.request.query_params.get('top'),
+            'mid': self.request.query_params.get('mid'),
+            'adc': self.request.query_params.get('adc'),
+            'jungle': self.request.query_params.get('jug'),
+            'support': self.request.query_params.get('sup'),
+        }
+
+    def filter_team_compositions(self, queryset, champion_ids):
+        """챔피언 ID에 따라 팀 구성 필터링."""
+        for role, champion_id in champion_ids.items():
+            if champion_id:
+                queryset = queryset.filter(**{f"{role}__champion_id": champion_id})
+        return queryset
+
     @team_composition_list_docs
     def list(self, request, *args, **kwargs):
-
-        top_champion_id = request.query_params.get('top')
-        mid_champion_id = request.query_params.get('mid')
-        adc_champion_id = request.query_params.get('adc')
-        jungle_champion_id = request.query_params.get('jug')
-        support_champion_id = request.query_params.get('sup')
-
-        queryset = TeamComposition.objects.all()
-
-
-        if top_champion_id:
-            queryset = queryset.filter(top__champion_id=top_champion_id)
-        if mid_champion_id:
-            queryset = queryset.filter(mid__champion_id=mid_champion_id)
-        if adc_champion_id:
-            queryset = queryset.filter(adc__champion_id=adc_champion_id)
-        if jungle_champion_id:
-            queryset = queryset.filter(jungle__champion_id=jungle_champion_id)
-        if support_champion_id:
-            queryset = queryset.filter(support__champion_id=support_champion_id)
-
+        queryset = self.get_queryset()
         top_compositions = queryset.order_by('-pick_count', '-win_count')[:3]
-
         serializer = self.get_serializer(top_compositions, many=True)
         return Response(serializer.data)
 
