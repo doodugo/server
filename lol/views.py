@@ -3,18 +3,20 @@ from rest_framework import viewsets
 from rest_framework.response import Response
 from .models import Champion, TeamComposition
 from .serializers import ChampionSerializer, TeamCompositionSerializer
+from docs.custom_docs import team_composition_list_docs
 
 class TeamCompositionViewSet(viewsets.ModelViewSet):
     """ViewSet for TeamComposition model."""
     queryset = TeamComposition.objects.all()
     serializer_class = TeamCompositionSerializer
 
+    @team_composition_list_docs
     def list(self, request, *args, **kwargs):
 
         top_champion_id = request.query_params.get('top')
         mid_champion_id = request.query_params.get('mid')
         adc_champion_id = request.query_params.get('adc')
-        jungle_champion_id = request.query_params.get('jung')
+        jungle_champion_id = request.query_params.get('jug')
         support_champion_id = request.query_params.get('sup')
 
         queryset = TeamComposition.objects.all()
