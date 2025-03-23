@@ -5,7 +5,7 @@ from .models import Champion, TeamComposition
 from .serializers import ChampionSerializer, TeamCompositionSerializer
 from docs.custom_docs import team_composition_list_docs
 
-class TeamCompositionViewSet(viewsets.ModelViewSet):
+class TeamCompositionViewSet(viewsets.ReadOnlyModelViewSet):
     """ViewSet for TeamComposition model."""
     queryset = TeamComposition.objects.all()
     serializer_class = TeamCompositionSerializer
@@ -41,7 +41,7 @@ class TeamCompositionViewSet(viewsets.ModelViewSet):
 
 
 #TODO 언어를 쿠키에 넣고 체크 후 나라 별 챔피언 이름으로 정렬 기능
-class ChampionViewSet(viewsets.ModelViewSet):
+class ChampionViewSet(viewsets.ReadOnlyModelViewSet):
     """ViewSet for Champion model."""
     queryset = Champion.objects.order_by('name')
     serializer_class = ChampionSerializer
