@@ -17,7 +17,16 @@ class Champion(models.Model):
         null=True,
         blank=True,
     )
-    image_url = models.CharField(max_length=200)
+    full_image_url = models.CharField(
+        max_length=200,
+        blank=True,
+        null=True
+    )
+    icon_image_url = models.CharField(
+        max_length=200,
+        blank=True,
+        null=True
+    )
     ban_count = models.IntegerField(default=0)
 
     def __str__(self):
