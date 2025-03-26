@@ -53,10 +53,30 @@ class ChampionSerializer(serializers.ModelSerializer):
     """Serializer for Champion model."""
 
     name_local = serializers.CharField(source='name_ko')
+    positions = serializers.ListField(
+        child=serializers.CharField()
+    )
 
     class Meta:
         model = Champion
         fields = [
             'id', 'name', 'name_local', 
-            'full_image_url', 'icon_image_url'
+            'full_image_url', 'icon_image_url',
+            'positions'
         ]
+
+    def get_positions(self, obj):
+        positions = []
+
+        if hasattr(obj, 'top_champion'):
+            positions.append('top')
+        if hasattr(obj, 'jungle_champion'):
+            positions.append('jug')
+        if hasattr(obj, 'mid_champion'):
+            positions.append('mid')
+        if hasattr(obj, 'adc_champion'):
+            positions.append('adc')
+        if hasattr(obj, 'support_champion'):
+            positions.append('sup')
+
+        return positions
