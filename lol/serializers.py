@@ -52,6 +52,11 @@ class TeamCompositionSerializer(serializers.ModelSerializer):
 class ChampionSerializer(serializers.ModelSerializer):
     """Serializer for Champion model."""
 
+    name_local = serializers.CharField(source='name_ko')
+
     class Meta:
         model = Champion
-        fields = ['id', 'name', 'name_ko', 'image_url']
+        fields = [
+            'id', 'name', 'name_local', 
+            'full_image_url', 'icon_image_url'
+        ]
