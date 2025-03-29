@@ -10,7 +10,7 @@ def create_or_get_champion_by_name(name):
     """챔피언 생성 또는 조회"""
     champion, _ = Champion.objects.get_or_create(
         name=name,
-        defaults={'image_url': ''}  # 임시로 빈 값
+        defaults={'full_image_url': ''}  # 임시로 빈 값
     )
     return champion
 
@@ -24,11 +24,11 @@ def process_match_data(row) -> tuple[Match, bool, str]:
         patch = row.select_one('td:nth-child(2)').get_text().strip()
 
         blue_team_td = row.select_one('td:nth-child(3)')
-        blue_team_name = blue_team_td.select_one('a img').get('alt').replace('std', '').strip()
+        blue_team_name = blue_team_td.select_one('a').get('title').replace('std', '').strip()
         red_team_td = row.select_one('td:nth-child(4)')
-        red_team_name = red_team_td.select_one('a img').get('alt').replace('std', '').strip()
+        red_team_name = red_team_td.select_one('a').get('title').replace('std', '').strip()
         winner_td = row.select_one('td:nth-child(5)')
-        winner_name = winner_td.select_one('a img').get('alt').replace('std', '').strip()
+        winner_name = winner_td.select_one('a').get('title').replace('std', '').strip()
 
         print('팀 이름 디버깅:', blue_team_name, red_team_name, winner_name)
         blue_team, _ = Team.objects.get_or_create(
