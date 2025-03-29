@@ -30,13 +30,13 @@ jobs:
           tags: chlendyd/lol-data:latest
 
       - name: Deploy to Server
-      uses: appleboy/ssh-action@master
-      with:
-        host: ${{ secrets.SERVER_HOST }}
-        username: ${{ secrets.SERVER_USERNAME }}
-        key: ${{ secrets.SERVER_SSH_KEY }}
-        script: |
-          cd /path/to/your/project
-          docker pull your-dockerhub-username/your-app:latest
-          docker-compose down
-          docker-compose up -d
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USERNAME }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            cd /path/to/your/project
+            docker pull chlendyd/lol-data:latest
+            docker-compose down
+            docker-compose up -d
