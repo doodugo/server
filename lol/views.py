@@ -43,7 +43,13 @@ class TeamCompositionViewSet(viewsets.ReadOnlyModelViewSet):
 #TODO 언어를 쿠키에 넣고 체크 후 나라 별 챔피언 이름으로 정렬 기능
 class ChampionViewSet(viewsets.ReadOnlyModelViewSet):
     """ViewSet for Champion model."""
-    queryset = Champion.objects.order_by('name')
+    queryset = Champion.objects.order_by('name').prefetch_related(
+        'top_champion',
+        'jungle_champion',
+        'mid_champion',
+        'adc_champion',
+        'support_champion'
+    )
     serializer_class = ChampionSerializer
 
     def list(self, request, *args, **kwargs):
