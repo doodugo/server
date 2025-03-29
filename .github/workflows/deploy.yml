@@ -27,7 +27,7 @@ jobs:
         with:
           context: .
           push: true
-          tags: chlendyd/lolpick:latest
+          tags: chlendyd7/lolpick:latest
 
       - name: Deploy to Server
         uses: appleboy/ssh-action@master
@@ -37,6 +37,6 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
             cd /path/to/your/project
-            docker pull chlendyd/lolpick:latest
+            docker pull chlendyd7/lolpick:latest
             docker-compose down
             docker-compose up -d
