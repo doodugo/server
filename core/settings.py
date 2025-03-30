@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
 import os
+from dotenv import load_dotenv
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -19,14 +20,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
+load_dotenv()
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-!fkm&zfak0bz##kumonth&b2#j99s(y2qx)1$r%kq%=b$$!t@*'
+SECRET_KEY = os.getenv('SECRET_KEY')
+DEBUG = os.getenv('DEV') == 'True'
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost').split(',')
 
 
 # Application definition
@@ -46,7 +45,6 @@ SECONDARY_APPS = [
 
 THIRD_APPS = [
     'rest_framework',
-    'debug_toolbar',
     'drf_spectacular',
     'corsheaders',
 ]
@@ -64,12 +62,14 @@ MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
 ]
 
-CORS_ALLOWED_ORIGINS = [
-    'http://localhost:3000',
-]
 
 if DEBUG:
+    INSTALLED_APPS += ['debug_toolbar']
     MIDDLEWARE += ['debug_toolbar.middleware.DebugToolbarMiddleware']
+    INTERNAL_IPS = ['127.0.0.1', 'localhost', '0.0.0.0', '172.18.0.1']
+    CORS_ALLOWED_ORIGINS = [
+        'http://localhost:3000',
+    ]
 
 ROOT_URLCONF = 'core.urls'
 
@@ -89,13 +89,6 @@ TEMPLATES = [
     },
 ]
 
-INTERNAL_IPS = [
-    '127.0.0.1',
-    'localhost',
-    '0.0.0.0',
-    '172.18.0.1',
-]
-
 WSGI_APPLICATION = 'core.wsgi.application'
 
 
@@ -105,11 +98,11 @@ WSGI_APPLICATION = 'core.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv('POSTGRES_DB', 'devdb'),
-        'USER': os.getenv('POSTGRES_USER', 'devuser'),
-        'PASSWORD': os.getenv('POSTGRES_PASSWORD', 'changeme'),
-        'HOST': os.getenv('DB_HOST', 'db'),
-        'PORT': os.getenv('DB_PORT', 5432),
+        'NAME': os.getenv('DB_NAME'),
+        'USER': os.getenv('DB_USER'),
+        'PASSWORD': os.getenv('DB_PASS'),
+        'HOST': os.getenv('DB_HOST'),
+        'PORT': os.getenv('DB_PORT'),
     }
 }
 
@@ -139,9 +132,9 @@ REST_FRAMEWORK = {
 # Internationalization
 # https://docs.djangoproject.com/en/4.2/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'ko-kr'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Seoul'
 
 USE_I18N = True
 

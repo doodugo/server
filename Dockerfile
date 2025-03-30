@@ -12,7 +12,6 @@ RUN apk add --update --no-cache postgresql-client && \
 
 ARG DEV=false
 ENV DEV=${DEV}
-ENV DJANGO_DEBUG=True
 
 # 먼저 requirements 파일들만 복사
 COPY ./requirements.txt /tmp/requirements.txt
@@ -22,7 +21,7 @@ COPY ./requirements.dev.txt /tmp/requirements.dev.txt
 RUN python -m venv /venv && \
     /venv/bin/pip install --upgrade pip && \
     /venv/bin/pip install -r /tmp/requirements.txt && \
-    if [ $DEV = "true" ]; then \
+    if [ $DEV = "True" ]; then \
         /venv/bin/pip install -r /tmp/requirements.dev.txt ; \
     fi && \
     rm -rf /tmp && \
@@ -32,5 +31,7 @@ ENV PATH="/venv/bin:$PATH"
 
 USER root
 
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+# CMD ["gunicorn", "config.wsgi:application", "--bind", "0.0.0.0:8000"]
+
+# CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
 
