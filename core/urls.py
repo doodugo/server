@@ -18,8 +18,10 @@ from django.conf import settings
 from django.contrib import admin
 from django.urls import include, path
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView, SpectacularRedocView
+from django.shortcuts import redirect
 
 urlpatterns = [
+    # path('', lambda request: redirect('api/docs/')),
     path('admin/', admin.site.urls),
     path('lol/', include('lol.urls')),
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
@@ -27,9 +29,5 @@ urlpatterns = [
 ]
 
 if settings.DEBUG:
-    print("DEBUG is True")
-    urlpatterns = [
-        path('__debug__/', include('debug_toolbar.urls')),
-    ] + urlpatterns
-else:
-    print("DEBUG is False")
+    import debug_toolbar
+    urlpatterns += [path('__debug__/', include(debug_toolbar.urls))]

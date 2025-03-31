@@ -4,27 +4,25 @@
 # docker compose run up
 # docker compose build
 
+# docker-compose build --no-cache --build-arg DEV=True
 services:
   app:
     build:
       context: .
       args:
-        - DEV=${DEV}
+        DEV: ${DEV}
     ports:
       - "8000:8000"
     volumes:
       - .:/app
     command: >
       sh -c "python manage.py runserver 0.0.0.0:8000"
-    environment:
-      - DJANGO_SETTINGS_MODULE=core.settings
-      - DB_HOST=${DB_HOST}
-      - DB_NAME=${DB_NAME}
-      - DB_USER=${DB_USER}
-      - DB_PASS=${DB_PASS}
+    env_file:
+      - .env
     depends_on:
       - db
 
+   
   db:
     image: postgres:16-alpine
     volumes:
@@ -33,6 +31,7 @@ services:
       - POSTGRES_DB=${DB_NAME}
       - POSTGRES_USER=${DB_USER}
       - POSTGRES_PASSWORD=${DB_PASS}
+    
 
   nginx:
     image: nginx:latest

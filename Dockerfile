@@ -10,8 +10,9 @@ RUN apk add --update --no-cache postgresql-client && \
     apk add --update --no-cache --virtual .tmp-build-deps \
         build-base postgresql-dev musl-dev gcc python3-dev musl-dev linux-headers
 
-ARG DEV=false
+ARG DEV
 ENV DEV=${DEV}
+RUN echo "Dev is ${DEV}"
 
 # 먼저 requirements 파일들만 복사
 COPY ./requirements.txt /tmp/requirements.txt

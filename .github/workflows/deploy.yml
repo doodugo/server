@@ -28,6 +28,8 @@ jobs:
           context: .
           push: true
           tags: chlendyd7/lolpick:latest
+          build-args: |
+            DEV=False
 
       - name: Deploy to Server
         uses: appleboy/ssh-action@master
