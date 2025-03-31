@@ -39,6 +39,7 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
             cd server
+            git pull origin main
             docker pull chlendyd7/lolpick:latest
             docker-compose down
             docker-compose up -d
