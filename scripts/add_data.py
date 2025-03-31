@@ -9,7 +9,7 @@ from lol.models import AdCarryChampion, Champion, JungleChampion, Match, MidCham
 def create_or_get_champion_by_name(name):
     """챔피언 생성 또는 조회"""
     champion, _ = Champion.objects.get_or_create(
-        name=name,
+        name=name.lower(),
         defaults={'full_image_url': ''}  # 임시로 빈 값
     )
     return champion
