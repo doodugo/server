@@ -5,7 +5,7 @@ import os
 
 
 # url = "https://lol.fandom.com/wiki/LCK/2025_Season/Cup/Match_History"
-url = 'https://lol.fandom.com/wiki/2025_First_Stand/Match_History'
+url = input('url: ')
 response = requests.get(url)
 soup = BeautifulSoup(response.content, 'html.parser')
 import os
