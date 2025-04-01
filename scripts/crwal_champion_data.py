@@ -5,8 +5,7 @@ from django.conf import settings
 import requests
 
 
-# Django 설정 모듈을 설정
-
+# docker compose run --rm app sh -c "python scripts/crwal_champion_data.py"
 def create_champion_data(champions):
     for champion in champions:
         champion_obj, _ = Champion.objects.get_or_create(
