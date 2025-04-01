@@ -21,10 +21,11 @@ services:
       - .env
     depends_on:
       - db
+    expose:
+      - "8000"
     networks:
       - my-network
 
-   
   db:
     image: postgres:16-alpine
     volumes:
@@ -43,6 +44,7 @@ services:
       - "80:80"
     volumes:
       - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+      - ./static:/app/static
     depends_on:
       - app
     networks:
