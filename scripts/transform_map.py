@@ -13,6 +13,8 @@ transform_map = {
     "wukong": "monkeyking",
     "kha'zix": "khazix",
     "rek'sai": "reksai",
+    "bel'veth": "belveth",
+    "xin zhao": "xinzhao",
 }
 
 match_history_url = [
