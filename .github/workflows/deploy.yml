@@ -41,5 +41,6 @@ jobs:
             cd server
             git pull origin main
             docker pull chlendyd7/lolpick:latest
+            docker network inspect my-network || docker network create my-network
             docker-compose down
             docker-compose up -d
