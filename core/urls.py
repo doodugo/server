@@ -22,8 +22,8 @@ from django.shortcuts import redirect
 
 urlpatterns = [
     # path('', lambda request: redirect('api/docs/')),
-    path('admin/', admin.site.urls),
-    path('lol/', include('lol.urls')),
+    path('api/admin/', admin.site.urls),
+    path('api/lol/', include('lol.urls')),
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
     path('api/docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='docs'),
 ]
