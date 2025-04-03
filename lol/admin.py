@@ -2,16 +2,123 @@ from django import forms
 from django.contrib import admin
 
 from lol.models import AdCarryChampion, Champion, Match, SupportChampion, Team, TeamComposition, TopChampion, JungleChampion, MidChampion
-
+from django.utils.translation import gettext_lazy as _
 # Register your models here.
 admin.site.register(Champion)
 admin.site.register(Team)
-admin.site.register(TeamComposition)
 admin.site.register(TopChampion)
 admin.site.register(JungleChampion)
 admin.site.register(MidChampion)
 admin.site.register(AdCarryChampion)
 admin.site.register(SupportChampion)
+
+
+class ChampionFilter(admin.SimpleListFilter):
+    """Base class for champion filters in different positions"""
+    title = _('Champion')  # Default title, will be overridden by subclasses
+    parameter_name = 'champion'  # Default parameter name, will be overridden by subclasses
+    position_field = None  # Will be set by subclasses
+    
+    def lookups(self, request, model_admin):
+        # Get distinct champions for this position
+        position_field = self.position_field
+        champion_field = f"{position_field}__champion"
+        
+        # Get all unique champions in this position from the filtered queryset
+        champions = model_admin.get_queryset(request).values_list(
+            f"{champion_field}__name", 
+            f"{champion_field}__name_ko"
+        ).distinct().order_by(f"{champion_field}__name")
+        
+        # Return as (value, display_name) tuples
+        return [(name, f"{name_ko} ({name})" if name_ko else name) for name, name_ko in champions]
+    
+    def queryset(self, request, queryset):
+        if self.value():
+            # Filter the queryset when a value is selected
+            filter_param = {f"{self.position_field}__champion__name": self.value()}
+            return queryset.filter(**filter_param)
+        return queryset
+
+
+class TopChampionFilter(ChampionFilter):
+    """Filter for champions in top position"""
+    title = _('Top Champion')
+    parameter_name = 'top_champion'
+    position_field = 'top'
+
+
+class JungleChampionFilter(ChampionFilter):
+    """Filter for champions in jungle position"""
+    title = _('Jungle Champion')
+    parameter_name = 'jungle_champion'
+    position_field = 'jungle'
+
+
+class MidChampionFilter(ChampionFilter):
+    """Filter for champions in mid position"""
+    title = _('Mid Champion')
+    parameter_name = 'mid_champion'
+    position_field = 'mid'
+
+
+class AdcChampionFilter(ChampionFilter):
+    """Filter for champions in ADC position"""
+    title = _('ADC Champion')
+    parameter_name = 'adc_champion'
+    position_field = 'adc'
+
+
+class SupportChampionFilter(ChampionFilter):
+    """Filter for champions in support position"""
+    title = _('Support Champion')
+    parameter_name = 'support_champion'
+    position_field = 'support'
+
+
+@admin.register(TeamComposition)
+class TeamCompositionAdmin(admin.ModelAdmin):
+    list_display = ('get_top_name', 'get_jungle_name', 'get_mid_name', 'get_adc_name', 'get_support_name', 'pick_count', 'win_count')
+    list_filter = (
+        TopChampionFilter,
+        JungleChampionFilter,
+        MidChampionFilter,
+        AdcChampionFilter,
+        SupportChampionFilter,
+    )
+    
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        qs = qs.select_related(
+            "top__champion", "jungle__champion", "mid__champion", "adc__champion", "support__champion",
+        ).order_by('top__champion__name')
+        return qs
+    
+    # Custom display methods for list_display to avoid N+1 queries
+    def get_top_name(self, obj):
+        return obj.top.champion.name_ko if obj.top and obj.top.champion else "-"
+    get_top_name.short_description = 'Top'
+    get_top_name.admin_order_field = 'top__champion__name'
+    
+    def get_jungle_name(self, obj):
+        return obj.jungle.champion.name_ko if obj.jungle and obj.jungle.champion else "-"
+    get_jungle_name.short_description = 'Jungle'
+    get_jungle_name.admin_order_field = 'jungle__champion__name'
+    
+    def get_mid_name(self, obj):
+        return obj.mid.champion.name_ko if obj.mid and obj.mid.champion else "-"
+    get_mid_name.short_description = 'Mid'
+    get_mid_name.admin_order_field = 'mid__champion__name'
+    
+    def get_adc_name(self, obj):
+        return obj.adc.champion.name_ko if obj.adc and obj.adc.champion else "-"
+    get_adc_name.short_description = 'ADC'
+    get_adc_name.admin_order_field = 'adc__champion__name'
+    
+    def get_support_name(self, obj):
+        return obj.support.champion.name_ko if obj.support and obj.support.champion else "-"
+    get_support_name.short_description = 'Support'
+    get_support_name.admin_order_field = 'support__champion__name'
 
 
 class MatchForm(forms.ModelForm):
