@@ -38,7 +38,7 @@ LPL_URL = [
     #2024
     'https://lol.fandom.com/wiki/LPL/2024_Season/Spring_Season/Match_History',
     'https://lol.fandom.com/wiki/LPL/2024_Season/Spring_Playoffs/Match_History',
-    'https://lol.fandom.com/wiki/LPL/2024_Season/Summer_Placements/Match_Historyy',
+    'https://lol.fandom.com/wiki/LPL/2024_Season/Summer_Placements/Match_History',
     'https://lol.fandom.com/wiki/LPL/2024_Season/Summer_Season/Match_History',
     'https://lol.fandom.com/wiki/LPL/2024_Season/Summer_Playoffs/Match_History',
     'https://lol.fandom.com/wiki/LPL/2024_Season/Regional_Finals/Match_History',
