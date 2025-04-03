@@ -37,7 +37,6 @@ def process_match_data(row) -> tuple[Match, bool, str]:
         winner_td = row.select_one('td:nth-child(5)')
         winner_name = winner_td.select_one('a').get('title').replace('std', '').strip()
 
-        print('팀 이름 디버깅:', blue_team_name, red_team_name, winner_name)
         blue_team, _ = Team.objects.get_or_create(
             name=blue_team_name,
         )
@@ -94,17 +93,12 @@ def create_role_champions(champions_obj):
     role_classes = [TopChampion, JungleChampion, MidChampion, AdCarryChampion, SupportChampion]
 
     for champion_obj, role_class in zip(champions_obj, role_classes):
-        role_obj, created = role_class.objects.get_or_create(champion=champion_obj)
-        if created:
-            print(f"Created {role_class.__name__} for {champion_obj.name}")
-        else:
-            print(f"Role object already exists for {role_class.__name__} {champion_obj.name}")
+        role_obj, _ = role_class.objects.get_or_create(champion=champion_obj)
         role_objects.append(role_obj)
 
     return role_objects
 
 def process_pick_data(blue_td, red_td):
-    print('process_pick_data 시작')
     blue_champions = []
     red_champions = []
 
@@ -129,9 +123,6 @@ def process_pick_data(blue_td, red_td):
         blue_role_objects = create_role_champions(blue_champions)
         red_role_objects = create_role_champions(red_champions)
 
-        print("Blue Team Composition:", blue_role_objects)
-        print("Red Team Composition:", red_role_objects)
-
         # 팀 구성 생성
         print('팀 구성 생성 시작')
         blue_team_composition, _ = TeamComposition.objects.get_or_create(
@@ -149,7 +140,6 @@ def process_pick_data(blue_td, red_td):
             adc=red_role_objects[3],
             support=red_role_objects[4],
         )
-        print('Red Team Composition:', red_team_composition)
 
         # 벌크 업데이트를 위해 F() 표현식 사용
 

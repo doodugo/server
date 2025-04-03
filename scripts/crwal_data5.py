@@ -31,22 +31,30 @@ if not settings.configured:
 
 
 from scripts.transform_map import match_history_url
-
+from django.db import transaction
 for url in match_history_url:
-    response = requests.get(url)
-    soup = BeautifulSoup(response.content, 'html.parser')
-    # 특정 클래스를 가진 테이블의 tbody 선택
-    table = soup.select_one('table.wikitable.hoverable-multirows.mhgame.sortable.plainlinks')
-    if table:
-        rows = table.select('tbody tr')
-    else:
-        raise ValueError(f"Table not found in {url}")
-    for row in rows[3:]:
-        if row.get('class') == ['mhgame-blue']:
-            continue
-        # 날짜
-        date_td = row.select_one('td:nth-child(1)')
-        match_id_td = row.select_one('td:nth-child(6)')
-        match, created = process_match_data(row)
-        print(f"Total matches: {len(rows)}")
+    '''
+        atomic을 추가함으로 무결성 보장
+        match를 통해 중복 로직 처리 방지
+    '''
+
+    with transaction.atomic():
+        response = requests.get(url)
+        soup = BeautifulSoup(response.content, 'html.parser')
+        # 특정 클래스를 가진 테이블의 tbody 선택
+        table = soup.select_one('table.wikitable.hoverable-multirows.mhgame.sortable.plainlinks')
+        if table:
+            rows = table.select('tbody tr')
+        else:
+            raise ValueError(f"Table not found in {url}")
+        for row in rows[3:]:
+            if row.get('class') == ['mhgame-blue']:
+                continue
+            # 날짜
+            date_td = row.select_one('td:nth-child(1)')
+            match_id_td = row.select_one('td:nth-child(6)')
+            match, created = process_match_data(row)
+            if not created:
+                break
+            print(f"Total matches: {len(rows)}")
 

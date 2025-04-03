@@ -15,6 +15,7 @@ transform_map = {
     "rek'sai": "reksai",
     "bel'veth": "belveth",
     "xin zhao": "xinzhao",
+    'dr. mundo': 'drmundo',
 }
 
 LCK_URL = [
