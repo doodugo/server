@@ -47,7 +47,7 @@ LPL_URL = [
 match_history_url = [
     'https://lol.fandom.com/wiki/2025_First_Stand/Match_History',
     'https://lol.fandom.com/wiki/2024_Mid-Season_Invitational/Match_History',
-    'https://lol.fandom.com/wiki/2024_Mid-Season_Invitational/Match_History'
+    'https://lol.fandom.com/wiki/2024_Mid-Season_Invitational/Match_History',
     'https://lol.fandom.com/wiki/2024_Season_World_Championship/Main_Event/Match_History',
     
     'https://lol.fandom.com/wiki/LCK_Academy_Series/2025_Season/1st_Championship/Match_History',
