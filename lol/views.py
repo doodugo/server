@@ -11,7 +11,13 @@ class TeamCompositionViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = TeamCompositionSerializer
 
     def get_queryset(self):
-        queryset = super().get_queryset()
+        queryset = super().get_queryset().select_related(
+            'top__champion',
+            'jungle__champion',
+            'mid__champion',
+            'adc__champion',
+            'support__champion'
+        )
         champion_ids = self.get_champion_ids()
         return self.filter_team_compositions(queryset, champion_ids)
 

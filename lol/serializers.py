@@ -29,6 +29,7 @@ class TeamCompositionSerializer(serializers.ModelSerializer):
             return {
                 'id': position.champion.id,
                 'name': position.champion.name,
+                'name_local': position.champion.name_ko,
                 'full_image_url': position.champion.full_image_url,
                 'icon_image_url': position.champion.icon_image_url,
             }
