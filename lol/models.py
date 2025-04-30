@@ -71,14 +71,6 @@ class ChampionStat(models.Model):
 class PositionChampion(models.Model):
     """Abstract base model for position-specific champion stats."""
 
-    champion = models.ForeignKey(
-        Champion,
-        on_delete=models.DO_NOTHING,
-        unique=True,
-    )
-    pick_count = models.IntegerField(default=0)
-    win_count = models.IntegerField(default=0)
-
     class Meta:
         abstract = True
 
@@ -184,7 +176,6 @@ class EsportsGame(models.Model):
         return f"{self.date} - {self.blue_team} vs {self.red_team}"
 
 
-# TODO created_at, update_at
 class TeamComposition(models.Model):
     """Team composition model focusing on champion combinations."""
 
