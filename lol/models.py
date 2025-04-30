@@ -27,7 +27,6 @@ class Champion(models.Model):
         blank=True,
         null=True
     )
-    ban_count = models.IntegerField(default=0)
 
     def __str__(self):
         return self.name
