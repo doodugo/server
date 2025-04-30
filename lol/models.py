@@ -33,6 +33,40 @@ class Champion(models.Model):
         return self.name
 
 
+class Position(models.TextChoices):
+    TOP = "TOP", "Top"
+    JUNGLE = "JUNGLE", "Jungle"
+    MID = "MID", "Mid"
+    ADC = "ADC", "Adc"
+    SUPPORT = "SUPPORT", "Support"
+
+
+class ChampionStat(models.Model):
+    patch = models.ForeignKey(
+        PatchVersion, on_delete=models.CASCADE, related_name="champion_stats"
+    )
+    champion = models.ForeignKey(
+        Champion, on_delete=models.CASCADE, related_name="champion_stats"
+    )
+    position = models.CharField(max_length=20, choices=Position.choices)
+    pick_count = models.IntegerField(default=0)
+    win_count = models.IntegerField(default=0)
+
+    class Meta:
+        unique_together = ("patch", "champion", "position")
+
+    @property
+    def win_rate(self):
+        return (self.win_count / self.pick_count * 100) if self.pick_count else 0
+
+    @property
+    def pick_rate(self):
+        total_games = (
+            self.patch.match_set.count() if hasattr(self.patch, "match_set") else None
+        )
+        return (self.pick_count / total_games * 100) if total_games else None
+
+
 class PositionChampion(models.Model):
     """Abstract base model for position-specific champion stats."""
 
