@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib import admin
 
-from lol.models import AdCarryChampion, Champion, EsportsGame, SupportChampion, Team, TeamComposition, TopChampion, JungleChampion, MidChampion
+from lol.models import AdCarryChampion, Champion, EsportsGame, PatchVersion, SupportChampion, Team, TeamComposition, TopChampion, JungleChampion, MidChampion
 from django.utils.translation import gettext_lazy as _
 # Register your models here.
 admin.site.register(Champion)
@@ -178,3 +178,4 @@ class MatchAdmin(admin.ModelAdmin):
 
 
 admin.site.register(EsportsGame, MatchAdmin)
+admin.site.register(PatchVersion)
