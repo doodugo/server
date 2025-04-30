@@ -26,16 +26,8 @@ class Champion(models.Model):
         null=True,
         blank=True,
     )
-    full_image_url = models.CharField(
-        max_length=200,
-        blank=True,
-        null=True
-    )
-    icon_image_url = models.CharField(
-        max_length=200,
-        blank=True,
-        null=True
-    )
+    full_image_url = models.CharField(max_length=200, blank=True, null=True)
+    icon_image_url = models.CharField(max_length=200, blank=True, null=True)
 
     def __str__(self):
         return self.name
@@ -100,9 +92,7 @@ class AdCarryChampion(PositionChampion):
     """AD Carry champion statistics."""
 
     champion = models.OneToOneField(
-        Champion,
-        on_delete=models.CASCADE,
-        related_name='adc_champion'
+        Champion, on_delete=models.CASCADE, related_name="adc_champion"
     )
 
 
@@ -128,35 +118,30 @@ class Team(models.Model):
 
 class Match(models.Model):
     """Match history for reference."""
+
     date = models.DateField()
     sets = models.IntegerField(default=0)
     patch = models.CharField(max_length=10)
     blue_composition = models.ForeignKey(
-        to='TeamComposition',
+        to="TeamComposition",
         on_delete=models.DO_NOTHING,
         related_name="blue_team_matches",
-        null=True
+        null=True,
     )
     red_composition = models.ForeignKey(
-        to='TeamComposition',
+        to="TeamComposition",
         on_delete=models.DO_NOTHING,
         related_name="red_team_matches",
-        null=True
+        null=True,
     )
     blue_team = models.ForeignKey(
-        to='Team',
-        on_delete=models.DO_NOTHING,
-        related_name="blue_team_matches"
+        to="Team", on_delete=models.DO_NOTHING, related_name="blue_team_matches"
     )
     red_team = models.ForeignKey(
-        to='Team',
-        on_delete=models.DO_NOTHING,
-        related_name="red_team_matches"
+        to="Team", on_delete=models.DO_NOTHING, related_name="red_team_matches"
     )
     winner = models.ForeignKey(
-        to='Team',
-        on_delete=models.DO_NOTHING,
-        related_name="winner_matches"
+        to="Team", on_delete=models.DO_NOTHING, related_name="winner_matches"
     )
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -167,36 +152,37 @@ class Match(models.Model):
 # TODO created_at, update_at
 class TeamComposition(models.Model):
     """Team composition model focusing on champion combinations."""
+
     top = models.ForeignKey(
         TopChampion,
         on_delete=models.CASCADE,
-        related_name='team_compositions',
+        related_name="team_compositions",
     )
     jungle = models.ForeignKey(
         JungleChampion,
         on_delete=models.CASCADE,
-        related_name='team_compositions',
+        related_name="team_compositions",
     )
     mid = models.ForeignKey(
         MidChampion,
         on_delete=models.CASCADE,
-        related_name='team_compositions',
+        related_name="team_compositions",
     )
     adc = models.ForeignKey(
         AdCarryChampion,
         on_delete=models.CASCADE,
-        related_name='team_compositions',
+        related_name="team_compositions",
     )
     support = models.ForeignKey(
         SupportChampion,
         on_delete=models.CASCADE,
-        related_name='team_compositions',
+        related_name="team_compositions",
     )
     pick_count = models.IntegerField(default=0)
     win_count = models.IntegerField(default=0)
 
     class Meta:
-        unique_together = ['top', 'jungle', 'mid', 'adc', 'support']
+        unique_together = ["top", "jungle", "mid", "adc", "support"]
 
     def __str__(self):
         return (
