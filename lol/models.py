@@ -1,5 +1,14 @@
 """LOL champion and team composition models."""
+
 from django.db import models
+
+
+class PatchVersion(models.Model):
+    version = models.CharField(max_length=20, unique=True, null=False, blank=False)
+    release_date = models.DateTimeField(null=False, blank=False)
+
+    def __str__(self):
+        return self.version
 
 
 class Champion(models.Model):
