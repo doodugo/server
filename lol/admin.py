@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib import admin
 
-from lol.models import AdCarryChampion, Champion, Match, SupportChampion, Team, TeamComposition, TopChampion, JungleChampion, MidChampion
+from lol.models import AdCarryChampion, Champion, EsportsGame, SupportChampion, Team, TeamComposition, TopChampion, JungleChampion, MidChampion
 from django.utils.translation import gettext_lazy as _
 # Register your models here.
 admin.site.register(Champion)
@@ -125,7 +125,7 @@ class MatchForm(forms.ModelForm):
     """Custom form for the Match model."""
     
     class Meta:
-        model = Match
+        model = EsportsGame
         fields = '__all__'
 
     def __init__(self, *args, **kwargs):
@@ -177,4 +177,4 @@ class MatchAdmin(admin.ModelAdmin):
     get_red_composition.short_description = "Red Composition"
 
 
-admin.site.register(Match, MatchAdmin)
+admin.site.register(EsportsGame, MatchAdmin)

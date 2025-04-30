@@ -150,7 +150,7 @@ class Team(models.Model):
         return self.name
 
 
-class Match(models.Model):
+class EsportsGame(models.Model):
     """Match history for reference."""
 
     date = models.DateField()
