@@ -1,15 +1,8 @@
-import os
 import requests
 from bs4 import BeautifulSoup
 from datetime import datetime, timezone
-import sys
-import django
 
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-sys.path.insert(0, BASE_DIR)
-
-os.environ["DJANGO_SETTINGS_MODULE"] = "core.settings"
-django.setup()
+from setup_django import *
 from lol.models import PatchVersion
 # 최신 버전 정보를 가져오는 함수
 def get_version():
