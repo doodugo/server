@@ -14,6 +14,7 @@ class PatchVersion(models.Model):
 class Champion(models.Model):
     """Champion model representing a League of Legends champion."""
 
+    id = models.IntegerField(unique=True, null=False, blank=False, primary_key=True)
     name = models.CharField(
         max_length=100,
         unique=True,
@@ -159,13 +160,13 @@ class EsportsGame(models.Model):
     blue_composition = models.ForeignKey(
         to="TeamComposition",
         on_delete=models.DO_NOTHING,
-        related_name="blue_team_matches",
+        related_name="blue_team_matches_esports",
         null=True,
     )
     red_composition = models.ForeignKey(
         to="TeamComposition",
         on_delete=models.DO_NOTHING,
-        related_name="red_team_matches",
+        related_name="red_team_matches_esports",
         null=True,
     )
     blue_team = models.ForeignKey(
@@ -187,6 +188,13 @@ class EsportsGame(models.Model):
 class TeamComposition(models.Model):
     """Team composition model focusing on champion combinations."""
 
+    patch = models.ForeignKey(
+        PatchVersion,
+        on_delete=models.CASCADE,
+        related_name="team_compositions",
+        null=True,
+        blank=True,
+    )
     top = models.ForeignKey(
         TopChampion,
         on_delete=models.CASCADE,
@@ -216,7 +224,7 @@ class TeamComposition(models.Model):
     win_count = models.IntegerField(default=0)
 
     class Meta:
-        unique_together = ["top", "jungle", "mid", "adc", "support"]
+        unique_together = ["patch", "top", "jungle", "mid", "adc", "support"]
 
     def __str__(self):
         return (
@@ -230,3 +238,14 @@ class TeamComposition(models.Model):
         if self.pick_count == 0:
             return 0
         return (self.win_count / self.pick_count) * 100
+
+
+class Match(models.Model):
+    match_id = models.IntegerField(unique=True, null=False, blank=False)
+    region = models.CharField(max_length=20, null=False, blank=False)
+    blue_team = models.ForeignKey(
+        TeamComposition, on_delete=models.CASCADE, related_name="blue_team_matches"
+    )
+    red_team = models.ForeignKey(
+        TeamComposition, on_delete=models.CASCADE, related_name="red_team_matches"
+    )
