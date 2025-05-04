@@ -21,6 +21,7 @@ services:
       - .env
     depends_on:
       - db
+      - redis
     expose:
       - "8000"
     networks:
@@ -48,6 +49,30 @@ services:
       - ./lckPick/.next:/app/lckPick/.next
     depends_on:
       - app
+    networks:
+      - my-network
+
+  celery:
+    container_name: celery
+    build:
+      context: .
+    working_dir: /app
+    volumes:
+      - .:/app
+    command: >
+      sh -c "celery -A core.celery worker --loglevel=info"
+    depends_on:
+      - app
+      - redis
+    env_file:
+      - .env
+    networks:
+      - my-network
+      
+  redis:
+    image: redis:7.4.3-alpine
+    ports:
+      - "6379:6379"
     networks:
       - my-network
 
