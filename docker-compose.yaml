@@ -64,8 +64,6 @@ services:
     depends_on:
       - app
       - redis
-    env_file:
-      - .env
     networks:
       - my-network
       

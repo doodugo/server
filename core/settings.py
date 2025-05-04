@@ -45,6 +45,7 @@ THIRD_APPS = [
     'rest_framework',
     'drf_spectacular',
     'corsheaders',
+    'celery',
 ]
 
 INSTALLED_APPS += SECONDARY_APPS + THIRD_APPS
