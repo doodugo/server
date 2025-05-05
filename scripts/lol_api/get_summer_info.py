@@ -11,7 +11,7 @@ RIOT_API_KEY = os.getenv("LOL_API_KEY")
 REGION = "kr"  # 소환사 API용 지역
 MATCH_REGION = "asia"  # 매치 API용 지역
 # TIERS = ['EMERALD', 'DIAMOND', 'PLATINUM', 'GOLD', 'SILVER', 'BRONZE', 'IRON']
-TIERS = ['DIAMOND','EMERALD','PLATINUM','GOLD','SILVER','BRONZE','IRON']
+TIERS = ["DIAMOND", "EMERALD", "PLATINUM", "GOLD", "SILVER", "BRONZE", "IRON"]
 
 PAGE = 1
 DIVISION = ["I", "II", "III", "IV"]
@@ -36,7 +36,9 @@ def get_summoner_info_v1() -> tuple[list[str], bool]:
     response = requests.get(url)
     print(response.status_code)
     print("response.json()", response.json())
-    ids = [summoner["puuid"] for summoner in response.json()]
+    ids = []
+    for summoner in response.json():
+        ids.append(summoner["puuid"])
 
     have_next = True
     if len(ids) != 205:
@@ -46,20 +48,22 @@ def get_summoner_info_v1() -> tuple[list[str], bool]:
 
 
 def get_summoner_info_v3() -> tuple[list[str], bool]:
-    """
+    """ 
     205개가 날라오는 해당 region의 tier안에 있는 유저들의 정보 puuid를 가져와서 match들을 참조하고 가공
     limit: 10초마다 50개의 요청
     챌린저, 마스터는 10초 30개 10분 500개
+    https://developer.riotgames.com/apis#league-v4/GET_getLeagueEntries
     """
     ids = []
     for division in DIVISION[:2]:
         url = f"https://{REGION}.api.riotgames.com/lol/league/v4/entries/RANKED_SOLO_5x5/{TIERS[0]}/{division}?page={PAGE}&api_key={RIOT_API_KEY}"
         response = requests.get(url)
-        data_list = response.json()
         temp_list = []
-        for data in data_list:
+        for data in response.json():
             temp_list.append(data['puuid'])
+
         ids.extend(temp_list)
+
     have_next = True
     if len(ids) != 205:
         have_next = False
@@ -114,8 +118,9 @@ def get_summoner_info_v2(page=1) -> tuple[list[str], bool]:
             logger.info(f"[{tier} {division}] page {page}, 누적 수집: {len(ids)}")
 
 
-def get_search_match_ids(puuid, datetime_obj):
+def get_search_match_ids(puuid_q, datetime_obj):
     """
+    https://developer.riotgames.com/apis#match-v5/GET_getMatchIdsByPUUID
     /lol/match/v5/matches/by-puuid/{puuid}/ids
     uuid를 통해서 게임 id를 반환
     limit: 10초마다 2000개의 요청
@@ -124,13 +129,40 @@ def get_search_match_ids(puuid, datetime_obj):
     startTime을 통해 해당 패치 기간 동안의 게임을 찾을 수 있을 듯
 
     """
-    url = f"https://{MATCH_REGION}.api.riotgames.com/lol/match/v5/matches/by-puuid/{puuid}/ids?start=0&count=20&api_key={RIOT_API_KEY}"
-    response = requests.get(url)
-    match_id_list = response.json()
+    start_time = int(datetime_obj.timestamp())
+    match_id_list = []
+    request_count = 0
+    RATE_LIMIT = 1999  # 10초마다 허용되는 최대 요청 수
+    RATE_WINDOW = 10
+    start_time = int(datetime_obj.timestamp())
+
+    for puuid in puuid_q:
+        url = (
+            f"https://{MATCH_REGION}.api.riotgames.com/lol/match/v5/matches/by-puuid/"
+            f"{puuid}/ids?startTime={start_time}&count=20&api_key={RIOT_API_KEY}"
+        )
+
+        print(url)
+
+        for attempt in range(3):
+            response = requests.get(url)
+            if response.status_code == 200:
+                print(f"success, {response.json()}")
+                match_id_list.extend(response.json())
+                break
+            elif response.status_code == 429:
+                print(f"429, time to sleep")
+                time.sleep(RATE_WINDOW)
+                continue
+            else:
+                logger.error(f"[{puuid}] 오류 코드: {response.status_code}, {response.text}")
+                print(response.text)
+                raise Exception(f"API 오류: {response.status_code}, {response.text}")
+
     return match_id_list
 
 
-def get_match_detail(match_id):
+def get_match_detail(match_id_list):
     """
     /lol/match/v5/matches/{matchId}
     https://developer.riotgames.com/apis#match-v5/GET_getMatch
@@ -141,23 +173,24 @@ def get_match_detail(match_id):
 
     데이터 가공
     """
+    for match_id in match_id_list[:3]:
+        url = f"https://{MATCH_REGION}.api.riotgames.com/lol/match/v5/matches/{match_id}?api_key={RIOT_API_KEY}"
+        response = requests.get(url)
+        print(response.json(), url)
 
-    match = match_id
-    url = f"https://{MATCH_REGION}.api.riotgames.com/lol/match/v5/matches/{match_id}?api_key={RIOT_API_KEY}"
-    response = requests.get(url, headers=headers)
-    data = response.json()["info"]
-    for p in data["participants"]:
-        champion_id = p["championId"]
-        k, d, a = p["kills"], p["deaths"], p["assists"]
+        data = response.json()["info"]
+        for p in data["participants"]:
+            champion_id = p["championId"]
+            k, d, a = p["kills"], p["deaths"], p["assists"]
 
-        print(
-            champion_id,
-            p["championName"],
-            p["role"],
-            p["win"],
-            p["individualPosition"],
-            p["lane"],
-        )
+            print(
+                champion_id,
+                p["championName"],
+                p["role"],
+                p["win"],
+                p["individualPosition"],
+                p["lane"],
+            )
 
 
 def get_puuid_by_name_tag(name, tag):
