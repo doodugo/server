@@ -1,5 +1,13 @@
 from rest_framework import serializers
-from .models import Champion, TeamComposition
+from .models import Champion, LoLUser, TeamComposition
+
+
+class LoLUserSerializer(serializers.ModelSerializer):
+    """Serializer for LoLUser model."""
+
+    class Meta:
+        model = LoLUser
+        fields = '__all__'
 
 class TeamCompositionSerializer(serializers.ModelSerializer):
     """Serializer for TeamComposition model."""
