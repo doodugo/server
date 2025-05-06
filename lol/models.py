@@ -2,6 +2,19 @@
 
 from django.db import models
 
+class LoLUser(models.Model):
+    puuid = models.CharField(max_length=100, unique=True, null=False, blank=False)
+    name = models.CharField(max_length=64, null=False, blank=False)
+    tag = models.CharField(max_length=32, null=False, blank=False)
+    tier = models.CharField(max_length=10, null=False, blank=False)
+    division = models.CharField(max_length=10, null=False, blank=False)
+    lp = models.IntegerField(default=0)
+    wins = models.IntegerField(default=0)
+    losses = models.IntegerField(default=0)
+
+    def __str__(self):
+        return f"{self.name}#{self.tag}"
+
 
 class PatchVersion(models.Model):
     version = models.CharField(max_length=20, unique=True, null=False, blank=False)
