@@ -4,8 +4,8 @@ from django.db import models
 
 class LoLUser(models.Model):
     puuid = models.CharField(max_length=100, unique=True, null=False, blank=False)
-    name = models.CharField(max_length=64, null=False, blank=False)
-    tag = models.CharField(max_length=32, null=False, blank=False)
+    name = models.CharField(max_length=64, null=True, blank=True)
+    tag = models.CharField(max_length=32, null=True, blank=True)
     tier = models.CharField(max_length=10, null=False, blank=False)
     division = models.CharField(max_length=10, null=False, blank=False)
     lp = models.IntegerField(default=0)
