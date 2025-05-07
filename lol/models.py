@@ -2,6 +2,7 @@
 
 from django.db import models
 
+
 class LoLUser(models.Model):
     puuid = models.CharField(max_length=100, unique=True, null=False, blank=False)
     name = models.CharField(max_length=64, null=True, blank=True)
@@ -253,3 +254,56 @@ class Match(models.Model):
     red_team = models.ForeignKey(
         TeamComposition, on_delete=models.CASCADE, related_name="red_team_matches"
     )
+
+
+class TopJungleMidComposition(models.Model):
+    patch = models.ForeignKey(
+        PatchVersion,
+        on_delete=models.CASCADE,
+        related_name="top_jugle_mid_compositions",
+    )
+    top = models.ForeignKey(
+        TopChampion, on_delete=models.CASCADE, related_name="top_jugle_mid_compositions"
+    )
+    jungle = models.ForeignKey(
+        JungleChampion,
+        on_delete=models.CASCADE,
+        related_name="top_jugle_mid_compositions",
+    )
+    mid = models.ForeignKey(
+        MidChampion, on_delete=models.CASCADE, related_name="top_jugle_mid_compositions"
+    )
+
+    pick_count = models.IntegerField(default=0)
+    win_count = models.IntegerField(default=0)
+
+    class Meta:
+        unique_together = ["patch", "top", "jungle", "mid"]
+
+    def __str__(self):
+        return f"({self.top.champion.name}, {self.jungle.champion.name}, {self.mid.champion.name})"
+
+
+class AdcSupportComposition(models.Model):
+    patch = models.ForeignKey(
+        PatchVersion, on_delete=models.CASCADE, related_name="adc_support_compositions"
+    )
+    adc = models.ForeignKey(
+        AdCarryChampion,
+        on_delete=models.CASCADE,
+        related_name="adc_support_compositions",
+    )
+    support = models.ForeignKey(
+        SupportChampion,
+        on_delete=models.CASCADE,
+        related_name="adc_support_compositions",
+    )
+
+    pick_count = models.IntegerField(default=0)
+    win_count = models.IntegerField(default=0)
+
+    class Meta:
+        unique_together = ["patch", "adc", "support"]
+
+    def __str__(self):
+        return f"({self.adc.champion.name}, {self.support.champion.name})"
