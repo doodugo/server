@@ -18,15 +18,17 @@ class UserService:
     ) -> LoLUser:
         try:
             with transaction.atomic():
-                user = LoLUser.objects.create_or_update(
+                user = LoLUser.objects.update_or_create(
                     puuid=puuid,
-                    name=name,
-                    tag=tag,
-                    tier=tier,
-                    division=division,
-                    lp=lp,
-                    wins=wins,
-                    losses=losses,
+                    defaults={
+                        "name": name,
+                        "tag": tag,
+                        "tier": tier,
+                        "division": division,
+                        "lp": lp,
+                        "wins": wins,
+                        "losses": losses,
+                    },
                 )
                 return user
         except Exception as e:

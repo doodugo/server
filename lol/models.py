@@ -246,7 +246,7 @@ class TeamComposition(models.Model):
 
 
 class Match(models.Model):
-    match_id = models.IntegerField(unique=True, null=False, blank=False)
+    match_id = models.BigIntegerField(unique=True, null=False, blank=False)
     region = models.CharField(max_length=20, null=False, blank=False)
     blue_team = models.ForeignKey(
         TeamComposition, on_delete=models.CASCADE, related_name="blue_team_matches"

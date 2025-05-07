@@ -4,6 +4,8 @@ from collections import defaultdict
 import time
 import logging
 
+from utils.response import handle_api_response
+
 logger = logging.getLogger(__name__)
 
 RIOT_API_KEY = os.getenv("LOL_API_KEY")
@@ -146,18 +148,10 @@ def get_search_match_ids(puuid_q, datetime_obj):
 
         for attempt in range(3):
             response = requests.get(url)
-            if response.status_code == 200:
-                print(f"success, {response.json()}")
-                match_id_list.extend(response.json())
-                break
-            elif response.status_code == 429:
-                print(f"429, time to sleep")
-                time.sleep(RATE_WINDOW)
-                continue
-            else:
-                logger.error(f"[{puuid}] 오류 코드: {response.status_code}, {response.text}")
-                print(response.text)
-                raise Exception(f"API 오류: {response.status_code}, {response.text}")
+            handle_api_response(response)
+            print(f"success, {response.json()}")
+            match_id_list.extend(response.json())
+            break
 
     return match_id_list
 

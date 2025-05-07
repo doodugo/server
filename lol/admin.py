@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib import admin
 
-from lol.models import AdCarryChampion, Champion, EsportsGame, PatchVersion, SupportChampion, Team, TeamComposition, TopChampion, JungleChampion, MidChampion
+from lol.models import AdCarryChampion, AdcSupportComposition, Champion, ChampionStat, EsportsGame, LoLUser, PatchVersion, SupportChampion, Team, TeamComposition, TopChampion, JungleChampion, MidChampion, TopJungleMidComposition
 from django.utils.translation import gettext_lazy as _
 # Register your models here.
 admin.site.register(Champion)
@@ -179,3 +179,46 @@ class MatchAdmin(admin.ModelAdmin):
 
 admin.site.register(EsportsGame, MatchAdmin)
 admin.site.register(PatchVersion)
+admin.site.register(LoLUser)
+admin.site.register(ChampionStat)
+
+@admin.register(AdcSupportComposition)
+class AdcSupportCompositionAdmin(admin.ModelAdmin):
+    list_display = ('patch', 'adc', 'support', 'pick_count', 'win_count')
+    list_filter = ('patch', 'adc', 'support')
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        qs = qs.select_related('adc__champion', 'support__champion', 'patch')
+        return qs
+
+@admin.register(TopJungleMidComposition)
+class TopJungleMidCompositionAdmin(admin.ModelAdmin):
+    list_display = ('patch', 'top_name', 'jungle_name', 'mid_name', 'pick_count', 'win_count')
+    list_filter = ('patch', 'top', 'jungle', 'mid')
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        # 챔피언 정보도 함께 미리 로드
+        return qs.select_related(
+            'patch',
+            'top', 
+            'top__champion',
+            'jungle', 
+            'jungle__champion',
+            'mid', 
+            'mid__champion'
+        )
+
+    # 각 챔피언 이름을 직접 반환
+    def top_name(self, obj):
+        return obj.top.champion.name if obj.top and obj.top.champion else "Unknown Top"
+    top_name.short_description = "Top Champion"
+
+    def jungle_name(self, obj):
+        return obj.jungle.champion.name if obj.jungle and obj.jungle.champion else "Unknown Jungle"
+    jungle_name.short_description = "Jungle Champion"
+
+    def mid_name(self, obj):
+        return obj.mid.champion.name if obj.mid and obj.mid.champion else "Unknown Mid"
+    mid_name.short_description = "Mid Champion"

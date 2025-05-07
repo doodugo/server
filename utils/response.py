@@ -1,15 +1,20 @@
 import os
 import time
+import requests
+from venv import logger
+
+LIMIT_TIME = int(os.getenv("LIMIT_TIME", 10))
 
 
-LIMIT_SECOND = os.getenv("LIMIT_SECOND", 10)
-
-
-def handle_api_response(response):
-    if response.status_code == 200:
-        return True
-    elif response.status_code == 429:
-        time.sleep(LIMIT_SECOND)
-        return False
-    else:
-        raise Exception(f"Error: {response.status_code}, {response.text}")
+def handle_api_response(url):
+    for _ in range(3):
+        response = requests.get(url)
+        if response.status_code == 200:
+            return response.json()
+        elif response.status_code == 429:
+            logger.info(f"limit: url: {url}, status_code: {response.status_code}, text: {response.text}")
+            time.sleep(LIMIT_TIME)
+        else:
+            raise Exception(
+                f"Error: url: {url}, status_code: {response.status_code}, text: {response.text}"
+            )
