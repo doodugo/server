@@ -35,6 +35,14 @@ class RiotApiService:
         self.patch_version = PatchVersion.objects.first()
         self.start_time = int(self.patch_version.release_date.timestamp())
 
+    def fetch_challenger_league_entries(self) -> dict:
+        url = f"https://kr.api.riotgames.com/lol/league/v4/challengerleagues/by-queue/RANKED_SOLO_5x5?api_key={self.api_key}"
+        return handle_api_response(url)
+
+    def fetch_grandmaster_league_entries(self) -> dict:
+        url = f"https://kr.api.riotgames.com/lol/league/v4/grandmasterleagues/by-queue/RANKED_SOLO_5x5?api_key={self.api_key}"
+        return handle_api_response(url)
+
     def fetch_league_entries(self, tier: str, division: str, page: int = 1) -> dict:
         """
             https://developer.riotgames.com/apis#league-v4/GET_getLeagueEntries
@@ -68,6 +76,22 @@ class RiotApiService:
         '''
         url = f"https://asia.api.riotgames.com/lol/match/v5/matches/by-puuid/{puuid}/ids?startTime={self.start_time}&type=ranked&count=100&api_key={self.api_key}"
         return handle_api_response(url)
+
+    def process_challenger_league_entries(self):
+        data = self.fetch_challenger_league_entries()
+        for entry in data["entries"]:
+            self.save_user_data(entry)
+            match_ids = self.get_match_ids_by_puuid(entry["puuid"])
+            for match_id in match_ids:
+                self.get_match_detail(match_id)
+
+    def process_grandmaster_league_entries(self):
+        data = self.fetch_grandmaster_league_entries()
+        for entry in data["entries"]:
+            self.save_user_data(entry)
+            match_ids = self.get_match_ids_by_puuid(entry["puuid"])
+            for match_id in match_ids:
+                self.get_match_detail(match_id)
 
     def process_user_data(self, tier, division):
         page = 1
