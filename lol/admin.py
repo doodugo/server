@@ -181,10 +181,10 @@ class AdcSupportCompositionAdmin(admin.ModelAdmin):
     list_display = ('patch', 'adc', 'support', 'pick_count', 'win_count')
     list_filter = ('patch', 'adc', 'support')
 
-    # def get_queryset(self, request):
-    #     qs = super().get_queryset(request)
-    #     qs = qs.select_related('adc__champion', 'support__champion', 'patch')
-    #     return qs
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        qs = qs.select_related('adc__champion', 'support__champion', 'patch')
+        return qs
 
 @admin.register(TopJungleMidComposition)
 class TopJungleMidCompositionAdmin(admin.ModelAdmin):
