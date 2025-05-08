@@ -56,37 +56,20 @@ class Position(models.TextChoices):
     SUPPORT = "SUPPORT", "Support"
 
 
-class ChampionStat(models.Model):
-    patch = models.ForeignKey(
-        PatchVersion, on_delete=models.CASCADE, related_name="champion_stats"
-    )
+class PositionChampion(models.Model):
     champion = models.ForeignKey(
-        Champion, on_delete=models.CASCADE, related_name="champion_stats"
+        Champion,
+        on_delete=models.CASCADE,
+    )
+    patch = models.ForeignKey(
+        PatchVersion,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
     )
     position = models.CharField(max_length=20, choices=Position.choices)
     pick_count = models.IntegerField(default=0)
     win_count = models.IntegerField(default=0)
-
-    class Meta:
-        unique_together = ("patch", "champion", "position")
-
-    @property
-    def win_rate(self):
-        return (self.win_count / self.pick_count * 100) if self.pick_count else 0
-
-    @property
-    def pick_rate(self):
-        total_games = (
-            self.patch.match_set.count() if hasattr(self.patch, "match_set") else None
-        )
-        return (self.pick_count / total_games * 100) if total_games else None
-
-
-class PositionChampion(models.Model):
-    """Abstract base model for position-specific champion stats."""
-
-    class Meta:
-        abstract = True
 
     def __str__(self):
         return str(self.champion.name)
@@ -97,54 +80,6 @@ class PositionChampion(models.Model):
         if self.pick_count == 0:
             return 0
         return (self.win_count / self.pick_count) * 100
-
-
-class TopChampion(PositionChampion):
-    """Top lane champion statistics."""
-
-    champion = models.OneToOneField(
-        Champion,
-        on_delete=models.CASCADE,
-        related_name="top_champion",
-    )
-
-
-class JungleChampion(PositionChampion):
-    """Jungle position champion statistics."""
-
-    champion = models.OneToOneField(
-        Champion,
-        on_delete=models.CASCADE,
-        related_name="jungle_champion",
-    )
-
-
-class MidChampion(PositionChampion):
-    """Mid lane champion statistics."""
-
-    champion = models.OneToOneField(
-        Champion,
-        on_delete=models.CASCADE,
-        related_name="mid_champion",
-    )
-
-
-class AdCarryChampion(PositionChampion):
-    """AD Carry champion statistics."""
-
-    champion = models.OneToOneField(
-        Champion, on_delete=models.CASCADE, related_name="adc_champion"
-    )
-
-
-class SupportChampion(PositionChampion):
-    """Support champion statistics."""
-
-    champion = models.OneToOneField(
-        Champion,
-        on_delete=models.CASCADE,
-        related_name="support_champion",
-    )
 
 
 class Team(models.Model):
@@ -158,31 +93,35 @@ class Team(models.Model):
 
 
 class EsportsGame(models.Model):
-    """Match history for reference."""
-
     date = models.DateField()
     sets = models.IntegerField(default=0)
     patch = models.CharField(max_length=10)
     blue_composition = models.ForeignKey(
-        to="TeamComposition",
+        "TeamComposition",
         on_delete=models.DO_NOTHING,
-        related_name="blue_team_matches_esports",
         null=True,
+        related_name="blue_compositions",
     )
     red_composition = models.ForeignKey(
-        to="TeamComposition",
+        "TeamComposition",
         on_delete=models.DO_NOTHING,
-        related_name="red_team_matches_esports",
         null=True,
+        related_name="red_compositions",
     )
     blue_team = models.ForeignKey(
-        to="Team", on_delete=models.DO_NOTHING, related_name="blue_team_matches"
+        "Team",
+        on_delete=models.DO_NOTHING,
+        related_name="blue_team_games",
     )
     red_team = models.ForeignKey(
-        to="Team", on_delete=models.DO_NOTHING, related_name="red_team_matches"
+        "Team",
+        on_delete=models.DO_NOTHING,
+        related_name="red_team_games",
     )
     winner = models.ForeignKey(
-        to="Team", on_delete=models.DO_NOTHING, related_name="winner_matches"
+        "Team",
+        on_delete=models.DO_NOTHING,
+        related_name="won_games",
     )
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -191,52 +130,47 @@ class EsportsGame(models.Model):
 
 
 class TeamComposition(models.Model):
-    """Team composition model focusing on champion combinations."""
-
     patch = models.ForeignKey(
-        PatchVersion,
+        "PatchVersion",
         on_delete=models.CASCADE,
-        related_name="team_compositions",
         null=True,
         blank=True,
     )
     top = models.ForeignKey(
-        TopChampion,
+        PositionChampion,
         on_delete=models.CASCADE,
-        related_name="team_compositions",
+        limit_choices_to={"position": Position.TOP},
+        related_name="top_team_compositions",
     )
     jungle = models.ForeignKey(
-        JungleChampion,
+        PositionChampion,
         on_delete=models.CASCADE,
-        related_name="team_compositions",
+        limit_choices_to={"position": Position.JUNGLE},
+        related_name="jungle_team_compositions",
     )
     mid = models.ForeignKey(
-        MidChampion,
+        PositionChampion,
         on_delete=models.CASCADE,
-        related_name="team_compositions",
+        limit_choices_to={"position": Position.MID},
+        related_name="mid_team_compositions",
     )
     adc = models.ForeignKey(
-        AdCarryChampion,
+        PositionChampion,
         on_delete=models.CASCADE,
-        related_name="team_compositions",
+        limit_choices_to={"position": Position.ADC},
+        related_name="adc_team_compositions",
     )
     support = models.ForeignKey(
-        SupportChampion,
+        PositionChampion,
         on_delete=models.CASCADE,
-        related_name="team_compositions",
+        limit_choices_to={"position": Position.SUPPORT},
+        related_name="support_team_compositions",
     )
     pick_count = models.IntegerField(default=0)
     win_count = models.IntegerField(default=0)
 
-    class Meta:
-        unique_together = ["patch", "top", "jungle", "mid", "adc", "support"]
-
     def __str__(self):
-        return (
-            f"({self.top.champion.name}, {self.jungle.champion.name}, "
-            f"{self.mid.champion.name}, {self.adc.champion.name}, "
-            f"{self.support.champion.name})"
-        )
+        return f"Team Comp (Patch: {self.patch})"
 
     @property
     def win_rate(self):
@@ -260,18 +194,24 @@ class TopJungleMidComposition(models.Model):
     patch = models.ForeignKey(
         PatchVersion,
         on_delete=models.CASCADE,
-        related_name="top_jugle_mid_compositions",
     )
     top = models.ForeignKey(
-        TopChampion, on_delete=models.CASCADE, related_name="top_jugle_mid_compositions"
+        PositionChampion,
+        on_delete=models.CASCADE,
+        limit_choices_to={"position": Position.TOP},
+        related_name="top_compositions",
     )
     jungle = models.ForeignKey(
-        JungleChampion,
+        PositionChampion,
         on_delete=models.CASCADE,
-        related_name="top_jugle_mid_compositions",
+        limit_choices_to={"position": Position.JUNGLE},
+        related_name="jungle_compositions",
     )
     mid = models.ForeignKey(
-        MidChampion, on_delete=models.CASCADE, related_name="top_jugle_mid_compositions"
+        PositionChampion,
+        on_delete=models.CASCADE,
+        limit_choices_to={"position": Position.MID},
+        related_name="mid_compositions",
     )
 
     pick_count = models.IntegerField(default=0)
@@ -286,17 +226,19 @@ class TopJungleMidComposition(models.Model):
 
 class AdcSupportComposition(models.Model):
     patch = models.ForeignKey(
-        PatchVersion, on_delete=models.CASCADE, related_name="adc_support_compositions"
+        PatchVersion, on_delete=models.CASCADE,
     )
     adc = models.ForeignKey(
-        AdCarryChampion,
+        PositionChampion,
         on_delete=models.CASCADE,
-        related_name="adc_support_compositions",
+        limit_choices_to={"position": Position.ADC},
+        related_name="adc_compositions",
     )
     support = models.ForeignKey(
-        SupportChampion,
+        PositionChampion,
         on_delete=models.CASCADE,
-        related_name="adc_support_compositions",
+        limit_choices_to={"position": Position.SUPPORT},
+        related_name="support_compositions",
     )
 
     pick_count = models.IntegerField(default=0)

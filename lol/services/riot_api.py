@@ -8,7 +8,6 @@ from lol.models import (
     AdCarryChampion,
     AdcSupportComposition,
     Champion,
-    ChampionStat,
     JungleChampion,
     Match,
     MidChampion,
@@ -215,28 +214,6 @@ class RiotApiService:
 
             print(champion_stat_list)
             print(position_champion_list)
-
-            for champion in champion_stat_list[0:5]:
-                champion_stat, _ = ChampionStat.objects.get_or_create(
-                    patch=self.patch_version,
-                    champion=champion,
-                    position=self.handle_champion_str(participant["teamPosition"]),
-                )
-                champion_stat.pick_count += 1
-                if blue_win:
-                    champion_stat.win_count += 1
-                champion_stat.save()
-
-            for champion in champion_stat_list[5:10]:
-                champion_stat, _ = ChampionStat.objects.get_or_create(
-                    patch=self.patch_version,
-                    champion=champion,
-                    position=self.handle_champion_str(participant["teamPosition"]),
-                )
-                champion_stat.pick_count += 1
-                if not blue_win:
-                    champion_stat.win_count += 1
-                champion_stat.save()
 
             blue_team_composition, _ = TeamComposition.objects.get_or_create(
                 patch=self.patch_version,

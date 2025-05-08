@@ -1,3 +1,4 @@
+# docker compose run app python /app/scripts/lol_api/ddragon_patch.py
 import requests
 from bs4 import BeautifulSoup
 from datetime import datetime, timezone

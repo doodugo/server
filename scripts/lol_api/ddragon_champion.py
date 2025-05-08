@@ -1,3 +1,4 @@
+# docker compose run app python /app/scripts/lol_api/ddragon_champion.py
 import requests
 
 from setup_django import *

@@ -1,16 +1,11 @@
 from django import forms
 from django.contrib import admin
 
-from lol.models import AdCarryChampion, AdcSupportComposition, Champion, ChampionStat, EsportsGame, LoLUser, PatchVersion, SupportChampion, Team, TeamComposition, TopChampion, JungleChampion, MidChampion, TopJungleMidComposition
+from lol.models import AdcSupportComposition, Champion, EsportsGame, LoLUser, PatchVersion, Team, TeamComposition, TopJungleMidComposition
 from django.utils.translation import gettext_lazy as _
 # Register your models here.
 admin.site.register(Champion)
 admin.site.register(Team)
-admin.site.register(TopChampion)
-admin.site.register(JungleChampion)
-admin.site.register(MidChampion)
-admin.site.register(AdCarryChampion)
-admin.site.register(SupportChampion)
 
 
 class ChampionFilter(admin.SimpleListFilter):
@@ -180,17 +175,16 @@ class MatchAdmin(admin.ModelAdmin):
 admin.site.register(EsportsGame, MatchAdmin)
 admin.site.register(PatchVersion)
 admin.site.register(LoLUser)
-admin.site.register(ChampionStat)
 
 @admin.register(AdcSupportComposition)
 class AdcSupportCompositionAdmin(admin.ModelAdmin):
     list_display = ('patch', 'adc', 'support', 'pick_count', 'win_count')
     list_filter = ('patch', 'adc', 'support')
 
-    def get_queryset(self, request):
-        qs = super().get_queryset(request)
-        qs = qs.select_related('adc__champion', 'support__champion', 'patch')
-        return qs
+    # def get_queryset(self, request):
+    #     qs = super().get_queryset(request)
+    #     qs = qs.select_related('adc__champion', 'support__champion', 'patch')
+    #     return qs
 
 @admin.register(TopJungleMidComposition)
 class TopJungleMidCompositionAdmin(admin.ModelAdmin):
