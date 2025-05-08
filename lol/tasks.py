@@ -46,25 +46,24 @@ def fetch_summoner_puuids(start_page=1):
 def collect_match_data():
     logger.info(f"get_puuid_info 시작: {time.time()}")
     start_time = time.time()  # 시작 시간 기록
-    riot_api_service = RiotApiService()
-    puuid_list = riot_api_service.get_puuid_info()
+    RiotApiService().get_puuid_info()
     logger.info(
         f"get_puuid_info 완료: {time.time()}, 소요 시간: {time.time() - start_time:.2f}초"
     )
 
-    start_time = int(PatchVersion.objects.first().release_date.timestamp())
-    for puuid in puuid_list:
-        logger.info(f"get_search_match_ids_by_puuid {puuid} 시작: {time.time()}")
-        start_time_match_ids = time.time()  # 시작 시간 기록
-        match_ids = riot_api_service.get_search_match_ids_by_puuid(puuid, start_time)
-        logger.info(
-            f"get_search_match_ids_by_puuid {puuid} 완료: {time.time()}, 소요 시간: {time.time() - start_time_match_ids:.2f}초"
-        )
+    # start_time = int(PatchVersion.objects.first().release_date.timestamp())
+    # for puuid in puuid_list:
+    #     logger.info(f"get_search_match_ids_by_puuid {puuid} 시작: {time.time()}")
+    #     start_time_match_ids = time.time()  # 시작 시간 기록
+    #     match_ids = riot_api_service.get_search_match_ids_by_puuid(puuid, start_time)
+    #     logger.info(
+    #         f"get_search_match_ids_by_puuid {puuid} 완료: {time.time()}, 소요 시간: {time.time() - start_time_match_ids:.2f}초"
+    #     )
 
-        logger.info(f"get_match_detail {puuid} 시작: {time.time()}")
-        start_time_match_detail = time.time()  # 시작 시간 기록
-        for match_id in match_ids:
-            riot_api_service.get_match_detail(match_id)
-        logger.info(
-            f"get_match_detail {puuid} 완료: {time.time()}, 소요 시간: {time.time() - start_time_match_detail:.2f}초"
-        )
+    #     logger.info(f"get_match_detail {puuid} 시작: {time.time()}")
+    #     start_time_match_detail = time.time()  # 시작 시간 기록
+    #     for match_id in match_ids:
+    #         riot_api_service.get_match_detail(match_id)
+    #     logger.info(
+    #         f"get_match_detail {puuid} 완료: {time.time()}, 소요 시간: {time.time() - start_time_match_detail:.2f}초"
+    #     )
