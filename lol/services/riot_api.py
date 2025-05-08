@@ -33,7 +33,8 @@ REGION = "kr"
 class RiotApiService:
     def __init__(self):
         self.api_key = RIOT_API_KEY
-        self.start_time = int(PatchVersion.objects.first().release_date.timestamp())
+        self.patch_version = PatchVersion.objects.first()
+        self.start_time = int(self.patch_version.release_date.timestamp())
 
     def fetch_league_entries(self, tier: str, division: str, page: int = 1) -> dict:
         """
@@ -184,7 +185,7 @@ class RiotApiService:
             return
 
         base_url = f"https://asia.api.riotgames.com/lol/match/v5/matches/"
-        query_params = f"{match_id}?api_key={RIOT_API_KEY}"
+        query_params = f"{match_id}?api_key={self.api_key}"
         url = base_url + query_params
 
         match_data = handle_api_response(url)
@@ -217,7 +218,7 @@ class RiotApiService:
 
             for champion in champion_stat_list[0:5]:
                 champion_stat, _ = ChampionStat.objects.get_or_create(
-                    patch=PatchVersion.objects.first(),
+                    patch=self.patch_version,
                     champion=champion,
                     position=self.handle_champion_str(participant["teamPosition"]),
                 )
@@ -228,7 +229,7 @@ class RiotApiService:
 
             for champion in champion_stat_list[5:10]:
                 champion_stat, _ = ChampionStat.objects.get_or_create(
-                    patch=PatchVersion.objects.first(),
+                    patch=self.patch_version,
                     champion=champion,
                     position=self.handle_champion_str(participant["teamPosition"]),
                 )
@@ -238,7 +239,7 @@ class RiotApiService:
                 champion_stat.save()
 
             blue_team_composition, _ = TeamComposition.objects.get_or_create(
-                patch=PatchVersion.objects.first(),
+                patch=self.patch_version,
                 top=position_champion_dict["TOP"][0],
                 jungle=position_champion_dict["JUNGLE"][0],
                 mid=position_champion_dict["MIDDLE"][0],
@@ -247,7 +248,7 @@ class RiotApiService:
             )
             blue_top_jungle_mid_composition, _ = (
                 TopJungleMidComposition.objects.get_or_create(
-                    patch=PatchVersion.objects.first(),
+                    patch=self.patch_version,
                     top=position_champion_dict["TOP"][0],
                     jungle=position_champion_dict["JUNGLE"][0],
                     mid=position_champion_dict["MIDDLE"][0],
@@ -255,7 +256,7 @@ class RiotApiService:
             )
             blue_adc_support_composition, _ = (
                 AdcSupportComposition.objects.get_or_create(
-                    patch=PatchVersion.objects.first(),
+                    patch=self.patch_version,
                     adc=position_champion_dict["BOTTOM"][0],
                     support=position_champion_dict["UTILITY"][0],
                 )
@@ -274,7 +275,7 @@ class RiotApiService:
             blue_adc_support_composition.save()
 
             red_team_composition, _ = TeamComposition.objects.get_or_create(
-                patch=PatchVersion.objects.first(),
+                patch=self.patch_version,
                 top=position_champion_dict["TOP"][1],
                 jungle=position_champion_dict["JUNGLE"][1],
                 mid=position_champion_dict["MIDDLE"][1],
@@ -283,7 +284,7 @@ class RiotApiService:
             )
             red_top_jungle_mid_composition, _ = (
                 TopJungleMidComposition.objects.get_or_create(
-                    patch=PatchVersion.objects.first(),
+                    patch=self.patch_version,
                     top=position_champion_dict["TOP"][1],
                     jungle=position_champion_dict["JUNGLE"][1],
                     mid=position_champion_dict["MIDDLE"][1],
@@ -291,7 +292,7 @@ class RiotApiService:
             )
             red_adc_support_composition, _ = (
                 AdcSupportComposition.objects.get_or_create(
-                    patch=PatchVersion.objects.first(),
+                    patch=self.patch_version,
                     adc=position_champion_dict["BOTTOM"][1],
                     support=position_champion_dict["UTILITY"][1],
                 )
