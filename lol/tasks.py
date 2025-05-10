@@ -47,8 +47,11 @@ def fetch_summoner_puuids(start_page=1):
 def collect_match_data():
     try:
         logger.info(f"get_puuid_info 시작: {time.time()}")
-        start_time = time.time()  # 시작 시간 기록
-        RiotApiService().process_challenger_league_entries()
+        start_time = time.time()
+        riot_api_service = RiotApiService()
+        riot_api_service.process_top_tier_league_entries()
+        sentry_sdk.capture_message("process_top_tier_league_entries 완료")
+        riot_api_service.process_middle_tier_user_data()
         patch_version = PatchVersion.objects.filter().first()
         patch_version.last_crawl_date = start_time
         patch_version.save()

@@ -16,7 +16,6 @@ def handle_api_response(url):
         elif response.status_code == 429:
             logger.info(f"limit: url: {url}, status_code: {response.status_code}, text: {response.text}")
             time.sleep(LIMIT_TIME)
-        else:
-            raise Exception(
-                f"Error: url: {url}, status_code: {response.status_code}, text: {response.text}"
-            )
+    raise Exception(
+        f"Error: url: {url}, status_code: {response.status_code}, text: {response.text}"
+    )

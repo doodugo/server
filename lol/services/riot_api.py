@@ -6,6 +6,7 @@ from django.db import transaction
 from lol.models import (
     AdcSupportComposition,
     Champion,
+    CounterRecord,
     Match,
     PatchVersion,
     Position,
@@ -17,10 +18,8 @@ from lol.services.users import UserService
 from utils.response import handle_api_response
 
 RIOT_API_KEY = os.getenv("LOL_API_KEY")
-# TIERS = ["DIAMOND", "EMERALD", "PLATINUM"]
-TIERS = ["DIAMOND"]
-DIVISION = ["I"]  # test용
-# DIVISION = ["I", "II", "III", "IV"]
+TIERS = ["DIAMOND", "EMERALD", "PLATINUM"]
+DIVISION = ["I", "II", "III", "IV"]
 REGION = "kr"
 
 
@@ -36,6 +35,10 @@ class RiotApiService:
 
     def fetch_grandmaster_league_entries(self) -> dict:
         url = f"https://kr.api.riotgames.com/lol/league/v4/grandmasterleagues/by-queue/RANKED_SOLO_5x5?api_key={self.api_key}"
+        return handle_api_response(url)
+
+    def fetch_master_league_entries(self) -> dict:
+        url = f"https://kr.api.riotgames.com/lol/league/v4/masterleagues/by-queue/RANKED_SOLO_5x5?api_key={self.api_key}"
         return handle_api_response(url)
 
     def fetch_league_entries(self, tier: str, division: str, page: int = 1) -> dict:
@@ -76,15 +79,22 @@ class RiotApiService:
         url = f"https://asia.api.riotgames.com/lol/match/v5/matches/by-puuid/{puuid}/ids?startTime={self.start_time}&type=ranked&count=100&api_key={self.api_key}"
         return handle_api_response(url)
 
-    def process_challenger_league_entries(self):
-        data = self.fetch_challenger_league_entries()
-        if data['tier']:
-            tier = data['tier']
-        for entry in data["entries"]:
-            self.save_user_data(entry, tier)
-            match_ids = self.get_match_ids_by_puuid(entry["puuid"])
-            for match_id in match_ids:
-                self.get_match_detail(match_id)
+    def process_top_tier_league_entries(self):
+        for url in [
+            # self.fetch_challenger_league_entries,
+            self.fetch_master_league_entries,
+            self.fetch_grandmaster_league_entries,
+        ]:
+            tier = None
+            data = url()
+            if data["tier"]:
+                tier = data["tier"]
+
+            for entry in data["entries"]:
+                self.save_user_data(entry, tier)
+                match_ids = self.get_match_ids_by_puuid(entry["puuid"])
+                for match_id in match_ids:
+                    self.get_match_detail(match_id)
 
     def process_grandmaster_league_entries(self):
         data = self.fetch_grandmaster_league_entries()
@@ -94,20 +104,22 @@ class RiotApiService:
             for match_id in match_ids:
                 self.get_match_detail(match_id)
 
-    def process_user_data(self, tier, division):
-        page = 1
-        while True:
-            data_list = self.fetch_league_entries(tier, division, page)
-            if len(data_list) == 0:
-                return
+    def process_middle_tier_user_data(self):
+        for tier in TIERS:
+            for division in DIVISION:
+                page = 1
+                while True:
+                    data_list = self.fetch_league_entries(tier, division, page)
+                    if len(data_list) == 0:
+                        break
 
-            for data in data_list:
-                self.save_user_data(data)
-                match_ids = self.get_match_ids_by_puuid(data["puuid"])
-                for match_id in match_ids:
-                    self.get_match_detail(match_id)
+                    for data in data_list:
+                        self.save_user_data(data)
+                        match_ids = self.get_match_ids_by_puuid(data["puuid"])
+                        for match_id in match_ids:
+                            self.get_match_detail(match_id)
 
-            page += 1
+                    page += 1
 
     def handle_riot_api(self, url: str) -> dict:
         base_url = (
@@ -234,18 +246,42 @@ class RiotApiService:
                 champion_obj = self.transform_position_champion_obj(position, champion)
                 position_champion_dict[position].append(champion_obj)
 
-            blue_compositions = self.get_or_create_compositions(position_champion_dict, 0)
-            red_compositions = self.get_or_create_compositions(position_champion_dict, 1)
+            blue_compositions = self.get_or_create_compositions(
+                position_champion_dict, 0
+            )
+            red_compositions = self.get_or_create_compositions(
+                position_champion_dict, 1
+            )
 
             self.update_composition_stats(blue_compositions, blue_win)
             self.update_composition_stats(red_compositions, not blue_win)
+            self.process_counter_data(position_champion_dict, blue_win)
 
             self.create_match(match_number, region, blue_compositions, red_compositions)
 
             logger.info(f"get_match_detail 처리 완료 {match_id}")
 
+    def process_counter_data(self, position_champion_dict, blue_win):
+        for position in ["TOP", "JUNGLE", "MIDDLE", "BOTTOM", "UTILITY"]:
+                record, _ = CounterRecord.get_or_create_record(
+                    self.patch_version,
+                    position,
+                    position_champion_dict[position][0].champion,
+                    position_champion_dict[position][1].champion,
+                )
+                if blue_win:
+                    record.wins_a += 1
+                else:
+                    record.wins_b += 1
+                record.save()
+
     def get_or_create_compositions(self, position_champion_dict, team_idx):
         return {
+            "TOP": position_champion_dict["TOP"][team_idx],
+            "JUNGLE": position_champion_dict["JUNGLE"][team_idx],
+            "MIDDLE": position_champion_dict["MIDDLE"][team_idx],
+            "BOTTOM": position_champion_dict["BOTTOM"][team_idx],
+            "UTILITY": position_champion_dict["UTILITY"][team_idx],
             "team": TeamComposition.objects.get_or_create(
                 patch=self.patch_version,
                 top=position_champion_dict["TOP"][team_idx],
@@ -288,12 +324,8 @@ class RiotApiService:
         self, position_champion_dict, match_number, region, blue_win
     ):
         """매치 데이터를 처리하여 저장합니다."""
-        blue_compositions = self.get_or_create_compositions(
-            position_champion_dict, 0
-        )
-        red_compositions = self.get_or_create_compositions(
-            position_champion_dict, 1
-        )
+        blue_compositions = self.get_or_create_compositions(position_champion_dict, 0)
+        red_compositions = self.get_or_create_compositions(position_champion_dict, 1)
         self.update_composition_stats(blue_compositions, blue_win)
         self.update_composition_stats(red_compositions, not blue_win)
         return self.create_match(
