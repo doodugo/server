@@ -4,7 +4,7 @@ from bs4 import BeautifulSoup
 from datetime import datetime
 from django.db.models import F
 
-from lol.models import AdCarryChampion, Champion, JungleChampion, Match, MidChampion, SupportChampion, Team, TeamComposition, TopChampion
+from lol.models import AdCarryChampion, Champion, JungleChampion, EsportsGame, MidChampion, SupportChampion, Team, TeamComposition, TopChampion
 
 from scripts.transform_map import transform_map
 
@@ -21,7 +21,7 @@ def create_or_get_champion_by_name(name):
         raise
     return champion
 
-def process_match_data(row) -> tuple[Match, bool, str]:
+def process_match_data(row) -> tuple[EsportsGame, bool, str]:
     try:
         print('process_match_data 시작')
         date = datetime.strptime(
@@ -53,7 +53,7 @@ def process_match_data(row) -> tuple[Match, bool, str]:
         blue_team_composition, red_team_composition = process_pick_data(blue_td, red_td)
         print('process_pick_data 종료')
 
-        match, created = Match.objects.get_or_create(
+        match, created = EsportsGame.objects.get_or_create(
             date=date,
             patch=patch,
             blue_team=blue_team,

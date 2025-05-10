@@ -30,7 +30,7 @@ RUN python -m venv /venv && \
         /venv/bin/pip install -r /tmp/requirements.dev.txt; \
     fi && \
     rm -rf /tmp && \
-    apk del .tmp-build-deps
+    apk del .tmp-build-deps postgresql-dev python3-dev linux-headers
 
 ENV PATH="/venv/bin:$PATH"
 

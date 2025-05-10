@@ -1,16 +1,11 @@
 from django import forms
 from django.contrib import admin
 
-from lol.models import AdCarryChampion, Champion, Match, SupportChampion, Team, TeamComposition, TopChampion, JungleChampion, MidChampion
+from lol.models import AdcSupportComposition, Champion, EsportsGame, LoLUser, Match, PatchVersion, PositionChampion, Team, TeamComposition, TopJungleMidComposition
 from django.utils.translation import gettext_lazy as _
 # Register your models here.
 admin.site.register(Champion)
 admin.site.register(Team)
-admin.site.register(TopChampion)
-admin.site.register(JungleChampion)
-admin.site.register(MidChampion)
-admin.site.register(AdCarryChampion)
-admin.site.register(SupportChampion)
 
 
 class ChampionFilter(admin.SimpleListFilter):
@@ -76,6 +71,8 @@ class SupportChampionFilter(ChampionFilter):
     position_field = 'support'
 
 
+admin.site.register(PositionChampion)
+admin.site.register(Match)
 @admin.register(TeamComposition)
 class TeamCompositionAdmin(admin.ModelAdmin):
     list_display = ('get_top_name', 'get_jungle_name', 'get_mid_name', 'get_adc_name', 'get_support_name', 'pick_count', 'win_count')
@@ -125,7 +122,7 @@ class MatchForm(forms.ModelForm):
     """Custom form for the Match model."""
     
     class Meta:
-        model = Match
+        model = EsportsGame
         fields = '__all__'
 
     def __init__(self, *args, **kwargs):
@@ -177,4 +174,47 @@ class MatchAdmin(admin.ModelAdmin):
     get_red_composition.short_description = "Red Composition"
 
 
-admin.site.register(Match, MatchAdmin)
+admin.site.register(EsportsGame, MatchAdmin)
+admin.site.register(PatchVersion)
+admin.site.register(LoLUser)
+
+@admin.register(AdcSupportComposition)
+class AdcSupportCompositionAdmin(admin.ModelAdmin):
+    list_display = ('patch', 'adc', 'support', 'pick_count', 'win_count')
+    list_filter = ('patch', 'adc', 'support')
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        qs = qs.select_related('adc__champion', 'support__champion', 'patch')
+        return qs
+
+@admin.register(TopJungleMidComposition)
+class TopJungleMidCompositionAdmin(admin.ModelAdmin):
+    list_display = ('patch', 'top_name', 'jungle_name', 'mid_name', 'pick_count', 'win_count')
+    list_filter = ('patch', 'top', 'jungle', 'mid')
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        # 챔피언 정보도 함께 미리 로드
+        return qs.select_related(
+            'patch',
+            'top', 
+            'top__champion',
+            'jungle', 
+            'jungle__champion',
+            'mid', 
+            'mid__champion'
+        )
+
+    # 각 챔피언 이름을 직접 반환
+    def top_name(self, obj):
+        return obj.top.champion.name if obj.top and obj.top.champion else "Unknown Top"
+    top_name.short_description = "Top Champion"
+
+    def jungle_name(self, obj):
+        return obj.jungle.champion.name if obj.jungle and obj.jungle.champion else "Unknown Jungle"
+    jungle_name.short_description = "Jungle Champion"
+
+    def mid_name(self, obj):
+        return obj.mid.champion.name if obj.mid and obj.mid.champion else "Unknown Mid"
+    mid_name.short_description = "Mid Champion"
