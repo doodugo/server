@@ -11,6 +11,8 @@ def handle_api_response(url):
         response = requests.get(url)
         if response.status_code == 200:
             return response.json()
+        elif response.status_code == 400:
+            time.sleep(2)
         elif response.status_code == 429:
             logger.info(f"limit: url: {url}, status_code: {response.status_code}, text: {response.text}")
             time.sleep(LIMIT_TIME)

@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib import admin
 
-from lol.models import AdcSupportComposition, Champion, EsportsGame, LoLUser, PatchVersion, Team, TeamComposition, TopJungleMidComposition
+from lol.models import AdcSupportComposition, Champion, EsportsGame, LoLUser, Match, PatchVersion, PositionChampion, Team, TeamComposition, TopJungleMidComposition
 from django.utils.translation import gettext_lazy as _
 # Register your models here.
 admin.site.register(Champion)
@@ -71,6 +71,8 @@ class SupportChampionFilter(ChampionFilter):
     position_field = 'support'
 
 
+admin.site.register(PositionChampion)
+admin.site.register(Match)
 @admin.register(TeamComposition)
 class TeamCompositionAdmin(admin.ModelAdmin):
     list_display = ('get_top_name', 'get_jungle_name', 'get_mid_name', 'get_adc_name', 'get_support_name', 'pick_count', 'win_count')

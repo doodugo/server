@@ -2,20 +2,15 @@ from collections import defaultdict
 import os
 import time
 from venv import logger
-import requests
 from django.db import transaction
 from lol.models import (
-    AdCarryChampion,
     AdcSupportComposition,
     Champion,
-    JungleChampion,
     Match,
-    MidChampion,
     PatchVersion,
     Position,
-    SupportChampion,
+    PositionChampion,
     TeamComposition,
-    TopChampion,
     TopJungleMidComposition,
 )
 from lol.services.users import UserService
@@ -45,17 +40,21 @@ class RiotApiService:
 
     def fetch_league_entries(self, tier: str, division: str, page: int = 1) -> dict:
         """
-            https://developer.riotgames.com/apis#league-v4/GET_getLeagueEntries
-            205개가 날라오는 해당 region의 tier안에 있는 유저들의 정보 puuid를 가져와서 match들을 참조하고 가공
-            limit: 10초마다 50개의 요청 챌린저, 마스터는 10초 30개 10분 500개
+        https://developer.riotgames.com/apis#league-v4/GET_getLeagueEntries
+        205개가 날라오는 해당 region의 tier안에 있는 유저들의 정보 puuid를 가져와서 match들을 참조하고 가공
+        limit: 10초마다 50개의 요청 챌린저, 마스터는 10초 30개 10분 500개
         """
         url = f"https://kr.api.riotgames.com/lol/league/v4/entries/RANKED_SOLO_5x5/{tier}/{division}?api_key={self.api_key}&page={page}"
         return handle_api_response(url)
 
-    def save_user_data(self, data):
+    def save_user_data(self, data, tier=None):
+        if tier:
+            tier = tier
+        else:
+            tier = data["tier"]
         UserService().save_user(
             puuid=data["puuid"],
-            tier=data["tier"],
+            tier=tier,
             division=data["rank"],
             lp=data["leaguePoints"],
             wins=data["wins"],
@@ -64,23 +63,25 @@ class RiotApiService:
 
     # TODO: 추후 endTime을 통해 데이터 범위 설정하기
     def get_match_ids_by_puuid(self, puuid: str) -> list[str]:
-        '''
-            https://developer.riotgames.com/apis#match-v5/GET_getMatchIdsByPUUID
-            uuid를 통해서 게임 id를 반환
-            limit: 10초마다 2000개의 요청
-            param:
-                startTime: 시작시간, 종료시간, 대기줄(?), 유형(rank, normal, tourney, tutorial)
-            startTime을 통해 해당 패치 기간 동안의 게임을 찾을 수 있음
-            return:
-                match_list: list[str] - match id 리스트
-        '''
+        """
+        https://developer.riotgames.com/apis#match-v5/GET_getMatchIdsByPUUID
+        uuid를 통해서 게임 id를 반환
+        limit: 10초마다 2000개의 요청
+        param:
+            startTime: 시작시간, 종료시간, 대기줄(?), 유형(rank, normal, tourney, tutorial)
+        startTime을 통해 해당 패치 기간 동안의 게임을 찾을 수 있음
+        return:
+            match_list: list[str] - match id 리스트
+        """
         url = f"https://asia.api.riotgames.com/lol/match/v5/matches/by-puuid/{puuid}/ids?startTime={self.start_time}&type=ranked&count=100&api_key={self.api_key}"
         return handle_api_response(url)
 
     def process_challenger_league_entries(self):
         data = self.fetch_challenger_league_entries()
+        if data['tier']:
+            tier = data['tier']
         for entry in data["entries"]:
-            self.save_user_data(entry)
+            self.save_user_data(entry, tier)
             match_ids = self.get_match_ids_by_puuid(entry["puuid"])
             for match_id in match_ids:
                 self.get_match_detail(match_id)
@@ -194,6 +195,12 @@ class RiotApiService:
 
         return match_list
 
+    def fetch_match_detail(self, match_id: str) -> dict:
+        base_url = f"https://asia.api.riotgames.com/lol/match/v5/matches/"
+        query_params = f"{match_id}?api_key={self.api_key}"
+        url = base_url + query_params
+        return handle_api_response(url)
+
     def get_match_detail(self, match_id: str) -> dict:
         """
         https://developer.riotgames.com/apis#match-v5/GET_getMatch
@@ -207,130 +214,123 @@ class RiotApiService:
             logger.info(f"중복 데이터 {match_id}")
             return
 
-        base_url = f"https://asia.api.riotgames.com/lol/match/v5/matches/"
-        query_params = f"{match_id}?api_key={self.api_key}"
-        url = base_url + query_params
-
-        match_data = handle_api_response(url)
-
+        match_data = self.fetch_match_detail(match_id)
         data = match_data["info"]
         if not data:
-            raise Exception(f"match_data: {match_data}, url: {url}")
+            raise Exception(f"match_data: {match_data}, match_id: {match_id}")
 
         position_champion_dict = defaultdict(list)
-        position_champion_list = []
-        champion_stat_list = []
 
         blue_win = data["teams"][0]["win"]  # blue_team
         with transaction.atomic():
             for participant in data["participants"]:
 
-                if participant["teamPosition"] == "":
-                    return
-
                 champion_id = participant["championId"]
                 champion = Champion.objects.get(id=champion_id)
+
                 position = participant["teamPosition"]
-                champion_obj = self.handle_position_obj(position, champion)
+                if position == "":
+                    return
+                champion_obj = self.transform_position_champion_obj(position, champion)
                 position_champion_dict[position].append(champion_obj)
-                champion_stat_list.append(champion)
-                position_champion_list.append(champion_obj)
 
-            print(champion_stat_list)
-            print(position_champion_list)
+            blue_compositions = self.get_or_create_compositions(position_champion_dict, 0)
+            red_compositions = self.get_or_create_compositions(position_champion_dict, 1)
 
-            blue_team_composition, _ = TeamComposition.objects.get_or_create(
-                patch=self.patch_version,
-                top=position_champion_dict["TOP"][0],
-                jungle=position_champion_dict["JUNGLE"][0],
-                mid=position_champion_dict["MIDDLE"][0],
-                adc=position_champion_dict["BOTTOM"][0],
-                support=position_champion_dict["UTILITY"][0],
-            )
-            blue_top_jungle_mid_composition, _ = (
-                TopJungleMidComposition.objects.get_or_create(
-                    patch=self.patch_version,
-                    top=position_champion_dict["TOP"][0],
-                    jungle=position_champion_dict["JUNGLE"][0],
-                    mid=position_champion_dict["MIDDLE"][0],
-                )
-            )
-            blue_adc_support_composition, _ = (
-                AdcSupportComposition.objects.get_or_create(
-                    patch=self.patch_version,
-                    adc=position_champion_dict["BOTTOM"][0],
-                    support=position_champion_dict["UTILITY"][0],
-                )
-            )
+            self.update_composition_stats(blue_compositions, blue_win)
+            self.update_composition_stats(red_compositions, not blue_win)
 
-            if blue_win:
-                blue_team_composition.win_count += 1
-                blue_top_jungle_mid_composition.win_count += 1
-                blue_adc_support_composition.win_count += 1
-
-            blue_team_composition.pick_count += 1
-            blue_team_composition.save()
-            blue_top_jungle_mid_composition.pick_count += 1
-            blue_top_jungle_mid_composition.save()
-            blue_adc_support_composition.pick_count += 1
-            blue_adc_support_composition.save()
-
-            red_team_composition, _ = TeamComposition.objects.get_or_create(
-                patch=self.patch_version,
-                top=position_champion_dict["TOP"][1],
-                jungle=position_champion_dict["JUNGLE"][1],
-                mid=position_champion_dict["MIDDLE"][1],
-                adc=position_champion_dict["BOTTOM"][1],
-                support=position_champion_dict["UTILITY"][1],
-            )
-            red_top_jungle_mid_composition, _ = (
-                TopJungleMidComposition.objects.get_or_create(
-                    patch=self.patch_version,
-                    top=position_champion_dict["TOP"][1],
-                    jungle=position_champion_dict["JUNGLE"][1],
-                    mid=position_champion_dict["MIDDLE"][1],
-                )
-            )
-            red_adc_support_composition, _ = (
-                AdcSupportComposition.objects.get_or_create(
-                    patch=self.patch_version,
-                    adc=position_champion_dict["BOTTOM"][1],
-                    support=position_champion_dict["UTILITY"][1],
-                )
-            )
-
-            if not blue_win:
-                red_team_composition.win_count += 1
-                red_top_jungle_mid_composition.win_count += 1
-                red_adc_support_composition.win_count += 1
-
-            red_team_composition.pick_count += 1
-            red_team_composition.save()
-            red_top_jungle_mid_composition.pick_count += 1
-            red_top_jungle_mid_composition.save()
-            red_adc_support_composition.pick_count += 1
-            red_adc_support_composition.save()
-
-            match = Match.objects.create(
-                match_id=match_number,
-                region=region,
-                blue_team=blue_team_composition,
-                red_team=red_team_composition,
-            )
+            self.create_match(match_number, region, blue_compositions, red_compositions)
 
             logger.info(f"get_match_detail 처리 완료 {match_id}")
 
-    def handle_position_obj(self, position: str, Champion: Champion) -> str:
+    def get_or_create_compositions(self, position_champion_dict, team_idx):
+        return {
+            "team": TeamComposition.objects.get_or_create(
+                patch=self.patch_version,
+                top=position_champion_dict["TOP"][team_idx],
+                jungle=position_champion_dict["JUNGLE"][team_idx],
+                mid=position_champion_dict["MIDDLE"][team_idx],
+                adc=position_champion_dict["BOTTOM"][team_idx],
+                support=position_champion_dict["UTILITY"][team_idx],
+            )[0],
+            "top_jungle_mid": TopJungleMidComposition.objects.get_or_create(
+                patch=self.patch_version,
+                top=position_champion_dict["TOP"][team_idx],
+                jungle=position_champion_dict["JUNGLE"][team_idx],
+                mid=position_champion_dict["MIDDLE"][team_idx],
+            )[0],
+            "adc_support": AdcSupportComposition.objects.get_or_create(
+                patch=self.patch_version,
+                adc=position_champion_dict["BOTTOM"][team_idx],
+                support=position_champion_dict["UTILITY"][team_idx],
+            )[0],
+        }
+
+    def update_composition_stats(self, compositions: dict, is_win):
+        """조합의 승/패에 따른 통계를 갱신합니다."""
+        for composition in compositions.values():
+            composition.pick_count += 1
+            if is_win:
+                composition.win_count += 1
+            composition.save()
+
+    def create_match(self, match_number, region, blue_compositions, red_compositions):
+        """매치 정보를 생성합니다."""
+        return Match.objects.create(
+            match_id=match_number,
+            region=region,
+            blue_team=blue_compositions["team"],
+            red_team=red_compositions["team"],
+        )
+
+    def handle_match_processing(
+        self, position_champion_dict, match_number, region, blue_win
+    ):
+        """매치 데이터를 처리하여 저장합니다."""
+        blue_compositions = self.get_or_create_compositions(
+            position_champion_dict, 0
+        )
+        red_compositions = self.get_or_create_compositions(
+            position_champion_dict, 1
+        )
+        self.update_composition_stats(blue_compositions, blue_win)
+        self.update_composition_stats(red_compositions, not blue_win)
+        return self.create_match(
+            match_number, region, blue_compositions, red_compositions
+        )
+
+    def transform_position_champion_obj(self, position: str, Champion: Champion) -> str:
         if position == "TOP":
-            return TopChampion.objects.get_or_create(champion=Champion)[0]
+            return PositionChampion.objects.get_or_create(
+                patch=self.patch_version,
+                champion=Champion,
+                position=Position.TOP,
+            )[0]
         elif position == "JUNGLE":
-            return JungleChampion.objects.get_or_create(champion=Champion)[0]
+            return PositionChampion.objects.get_or_create(
+                patch=self.patch_version,
+                champion=Champion,
+                position=Position.JUNGLE,
+            )[0]
         elif position == "MIDDLE":
-            return MidChampion.objects.get_or_create(champion=Champion)[0]
+            return PositionChampion.objects.get_or_create(
+                patch=self.patch_version,
+                champion=Champion,
+                position=Position.MID,
+            )[0]
         elif position == "BOTTOM":
-            return AdCarryChampion.objects.get_or_create(champion=Champion)[0]
+            return PositionChampion.objects.get_or_create(
+                patch=self.patch_version,
+                champion=Champion,
+                position=Position.ADC,
+            )[0]
         elif position == "UTILITY":
-            return SupportChampion.objects.get_or_create(champion=Champion)[0]
+            return PositionChampion.objects.get_or_create(
+                patch=self.patch_version,
+                champion=Champion,
+                position=Position.SUPPORT,
+            )[0]
         else:
             raise Exception(f"handle_position_obj 오류 {position}, {Champion}")
 
