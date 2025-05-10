@@ -20,6 +20,7 @@ class LoLUser(models.Model):
 class PatchVersion(models.Model):
     version = models.CharField(max_length=20, unique=True, null=False, blank=False)
     release_date = models.DateTimeField(null=False, blank=False)
+    last_crawl_date = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
         return self.version
@@ -80,6 +81,9 @@ class PositionChampion(models.Model):
         if self.pick_count == 0:
             return 0
         return (self.win_count / self.pick_count) * 100
+
+    class Meta:
+        unique_together = ["patch", "champion", "position"]
 
 
 class Team(models.Model):
