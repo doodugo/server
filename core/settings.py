@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 import os
 from dotenv import load_dotenv
 from pathlib import Path
+import sentry_sdk
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -158,3 +159,12 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 #Celery Setting
 CELERY_BROKER_URL = 'redis://redis:6379/0'
 CELERY_RESULT_BACKEND = 'redis://redis:6379/0'
+
+from sentry_sdk.integrations.django import DjangoIntegration
+sentry_sdk.init(
+    dsn="https://ad9569339fd1450f5926d8dac6f692fb@o4508471159554048.ingest.de.sentry.io/4509298780012624",
+    integrations=[DjangoIntegration()],
+    traces_sample_rate=1.0,  # 전송 비율 (0.0 ~ 1.0)
+    send_default_pii=True,   # 사용자 정보 포함
+    environment="production",  # 배포 환경
+)

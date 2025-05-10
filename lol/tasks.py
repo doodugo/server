@@ -14,6 +14,7 @@ from scripts.lol_api.get_summer_info import (
     get_summoner_info_v2,
     get_summoner_info_v3,
 )
+import sentry_sdk
 
 logger = logging.getLogger(__name__)
 
@@ -44,16 +45,19 @@ def fetch_summoner_puuids(start_page=1):
 
 @shared_task
 def collect_match_data():
-    logger.info(f"get_puuid_info 시작: {time.time()}")
-    start_time = time.time()  # 시작 시간 기록
-    RiotApiService().process_challenger_league_entries()
-    patch_version = PatchVersion.objects.filter().first()
-    patch_version.last_crawl_date = start_time
-    patch_version.save()
-    logger.info(
-        f"get_puuid_info 완료: {time.time()}, 소요 시간: {time.time() - start_time:.2f}초"
-    )
-
+    try:
+        logger.info(f"get_puuid_info 시작: {time.time()}")
+        start_time = time.time()  # 시작 시간 기록
+        RiotApiService().process_challenger_league_entries()
+        patch_version = PatchVersion.objects.filter().first()
+        patch_version.last_crawl_date = start_time
+        patch_version.save()
+        logger.info(
+            f"get_puuid_info 완료: {time.time()}, 소요 시간: {time.time() - start_time:.2f}초"
+        )
+        sentry_sdk.capture_message("get_puuid_info 완료")
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
 
     # start_time = int(PatchVersion.objects.first().release_date.timestamp())
     # for puuid in puuid_list:
