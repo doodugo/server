@@ -1,6 +1,7 @@
 """LOL champion and team composition models."""
 
 from django.db import models
+from django.db.models import Q
 
 
 class LoLUser(models.Model):
@@ -84,6 +85,72 @@ class PositionChampion(models.Model):
 
     class Meta:
         unique_together = ["patch", "champion", "position"]
+
+
+class CounterRecord(models.Model):
+    patch = models.ForeignKey(
+        "PatchVersion", on_delete=models.CASCADE, null=True, blank=True
+    )
+    position = models.CharField(max_length=20, choices=Position.choices)
+    champion_a = models.ForeignKey(
+        Champion, on_delete=models.CASCADE, related_name="counter_a"
+    )
+    champion_b = models.ForeignKey(
+        Champion, on_delete=models.CASCADE, related_name="counter_b"
+    )
+    wins_a = models.IntegerField(default=0)
+    wins_b = models.IntegerField(default=0)
+
+    class Meta:
+        unique_together = [("patch", "position", "champion_a", "champion_b")]
+
+    def __str__(self):
+        return f"{self.champion_a.name} vs {self.champion_b.name} ({self.position})"
+
+    @property
+    def total_matches(self):
+        return self.wins_a + self.wins_b
+
+    @property
+    def win_rate_a(self):
+        if self.total_matches == 0:
+            return 0
+        return (self.wins_a / self.total_matches) * 100
+
+    @property
+    def win_rate_b(self):
+        if self.total_matches == 0:
+            return 0
+        return (self.wins_b / self.total_matches) * 100
+
+    @staticmethod
+    def get_or_create_record(patch, position, champ1, champ2):
+        """
+        Check if the record already exists, if so update it; otherwise, create a new record.
+        """
+        champion_a, champion_b = min(champ1, champ2, key=lambda c: c.id), max(
+            champ1, champ2, key=lambda c: c.id
+        )
+
+        record, created = CounterRecord.objects.get_or_create(
+            patch=patch, position=position, champion_a=champion_a, champion_b=champion_b
+        )
+
+        return record, created
+
+    @staticmethod
+    def find_record(patch, position, champ1, champ2):
+        """
+        Retrieve the record by checking both combinations: (champion_a, champion_b) and (champion_b, champion_a)
+        """
+        return CounterRecord.objects.filter(
+            Q(patch=patch)
+            & Q(position=position)
+            & (
+                (Q(champion_a=champ1) & Q(champion_b=champ2))
+                | (Q(champion_a=champ2) & Q(champion_b=champ1))
+            )
+        ).first()
 
 
 class Team(models.Model):
@@ -230,7 +297,8 @@ class TopJungleMidComposition(models.Model):
 
 class AdcSupportComposition(models.Model):
     patch = models.ForeignKey(
-        PatchVersion, on_delete=models.CASCADE,
+        PatchVersion,
+        on_delete=models.CASCADE,
     )
     adc = models.ForeignKey(
         PositionChampion,
