@@ -64,6 +64,11 @@ services:
     depends_on:
       - app
       - redis
+    deploy:
+      resources:
+        limits:
+          memory: 512M  # 메모리 제한
+          cpus: "0.5"   # CPU 제한
     networks:
       - my-network
       
