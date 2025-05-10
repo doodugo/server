@@ -81,7 +81,7 @@ class RiotApiService:
 
     def process_top_tier_league_entries(self):
         for url in [
-            # self.fetch_challenger_league_entries,
+            self.fetch_challenger_league_entries,
             self.fetch_master_league_entries,
             self.fetch_grandmaster_league_entries,
         ]:
