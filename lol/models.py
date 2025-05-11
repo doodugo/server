@@ -79,7 +79,7 @@ class PositionChampion(models.Model):
         """Calculate win rate percentage."""
         if self.pick_count == 0:
             return 0
-        return (self.win_count / self.pick_count) * 100
+        return int((self.win_count / self.pick_count) * 100)
 
     class Meta:
         unique_together = ["patch", "champion", "position"]

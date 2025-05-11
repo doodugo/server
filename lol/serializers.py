@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Champion, LoLUser, Position, TeamComposition
+from .models import Champion, LoLUser, Position, PositionChampion, TeamComposition
 
 
 class LoLUserSerializer(serializers.ModelSerializer):
@@ -95,3 +95,27 @@ class ChampionSerializer(serializers.ModelSerializer):
         }
 
         return list(positions)
+
+
+class PositionChampionSerializer(serializers.ModelSerializer):
+    """Serializer for PositionChampion model."""
+
+    champion_name_ko = serializers.SerializerMethodField()
+    champion_icon_image_url = serializers.SerializerMethodField()
+
+    class Meta:
+        model = PositionChampion
+        fields = [
+            "champion_name_ko",
+            "position",
+            "pick_count",
+            "win_count",
+            "win_rate",
+            "champion_icon_image_url",
+        ]
+
+    def get_champion_name_ko(self, obj):
+        return obj.champion.name_ko
+
+    def get_champion_icon_image_url(self, obj):
+        return obj.champion.icon_image_url
