@@ -77,5 +77,5 @@ class ChampionViewSet(viewsets.ReadOnlyModelViewSet):
 
         queryset = self.get_queryset()
         serializer = self.get_serializer(queryset, many=True)
-        cache.set(cache_key, serializer.data)
+        cache.set(cache_key, serializer.data, 60 * 60 * 24)
         return Response(serializer.data)
