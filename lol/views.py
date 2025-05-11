@@ -1,6 +1,7 @@
 # server/lol/views.py
 from rest_framework import viewsets
 from rest_framework.response import Response
+from rest_framework.pagination import PageNumberPagination
 from .models import Champion, PositionChampion, TeamComposition
 from .serializers import ChampionSerializer, TeamCompositionSerializer
 from docs.custom_docs import team_composition_list_docs
@@ -48,10 +49,13 @@ class TeamCompositionViewSet(viewsets.ReadOnlyModelViewSet):
 
     @team_composition_list_docs
     def list(self, request, *args, **kwargs):
-        queryset = self.get_queryset()
-        top_compositions = queryset.order_by("-pick_count", "-win_count")[:3]
+        paginator = PageNumberPagination()
+        paginator.page_size = 50
+        queryset = self.get_queryset().order_by("-pick_count", "-win_count")[:200]
+
+        top_compositions = paginator.paginate_queryset(queryset, request)
         serializer = self.get_serializer(top_compositions, many=True)
-        return Response(serializer.data)
+        return paginator.get_paginated_response(serializer.data)
 
 
 # TODO 언어를 쿠키에 넣고 체크 후 나라 별 챔피언 이름으로 정렬 기능
@@ -63,7 +67,9 @@ class ChampionViewSet(viewsets.ReadOnlyModelViewSet):
             "positionchampion_set",
             queryset=PositionChampion.objects.only(
                 "id", "champion_id", "position", "patch_id"
-            ).select_related("patch").filter(pick_count__gt=15),
+            )
+            .select_related("patch")
+            .filter(pick_count__gt=15),
         ),
     )
     serializer_class = ChampionSerializer
