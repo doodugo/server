@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Champion, LoLUser, TeamComposition
+from .models import Champion, LoLUser, Position, TeamComposition
 
 
 class LoLUserSerializer(serializers.ModelSerializer):
@@ -7,11 +7,12 @@ class LoLUserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = LoLUser
-        fields = '__all__'
+        fields = "__all__"
+
 
 class TeamCompositionSerializer(serializers.ModelSerializer):
     """Serializer for TeamComposition model."""
-    
+
     top_champion = serializers.SerializerMethodField()
     jungle_champion = serializers.SerializerMethodField()
     mid_champion = serializers.SerializerMethodField()
@@ -21,25 +22,25 @@ class TeamCompositionSerializer(serializers.ModelSerializer):
     class Meta:
         model = TeamComposition
         fields = [
-            'id',
-            'top_champion',
-            'jungle_champion',
-            'mid_champion',
-            'adc_champion',
-            'support_champion',
-            'pick_count',
-            'win_count'
+            "id",
+            "top_champion",
+            "jungle_champion",
+            "mid_champion",
+            "adc_champion",
+            "support_champion",
+            "pick_count",
+            "win_count",
         ]
 
     def get_champion_info(self, position):
         """Helper method to return champion info as a dictionary."""
         if position and position.champion:
             return {
-                'id': position.champion.id,
-                'name': position.champion.name,
-                'name_local': position.champion.name_ko,
-                'full_image_url': position.champion.full_image_url,
-                'icon_image_url': position.champion.icon_image_url,
+                "id": position.champion.id,
+                "name": position.champion.name,
+                "name_local": position.champion.name_ko,
+                "full_image_url": position.champion.full_image_url,
+                "icon_image_url": position.champion.icon_image_url,
             }
         return None
 
@@ -62,29 +63,35 @@ class TeamCompositionSerializer(serializers.ModelSerializer):
 class ChampionSerializer(serializers.ModelSerializer):
     """Serializer for Champion model."""
 
-    name_local = serializers.CharField(source='name_ko')
+    name_local = serializers.CharField(source="name_ko")
     positions = serializers.SerializerMethodField()
 
     class Meta:
         model = Champion
         fields = [
-            'id', 'name', 'name_local', 
-            'full_image_url', 'icon_image_url',
-            'positions'
+            "id",
+            "name",
+            "name_local",
+            "full_image_url",
+            "icon_image_url",
+            "positions",
         ]
 
     def get_positions(self, obj):
-        positions = []
+        # Prefetched 데이터를 직접 사용
+        position_map = {
+            Position.TOP: "top",
+            Position.JUNGLE: "jug",
+            Position.MID: "mid",
+            Position.ADC: "adc",
+            Position.SUPPORT: "sup",
+        }
 
-        if hasattr(obj, 'top_champion'):
-            positions.append('top')
-        if hasattr(obj, 'jungle_champion'):
-            positions.append('jug')
-        if hasattr(obj, 'mid_champion'):
-            positions.append('mid')
-        if hasattr(obj, 'adc_champion'):
-            positions.append('adc')
-        if hasattr(obj, 'support_champion'):
-            positions.append('sup')
+        # positionchampion_set이 이미 Prefetch로 로드됨
+        positions = {
+            position_map[pos.position]
+            for pos in obj.positionchampion_set.all()
+            if pos.position in position_map
+        }
 
-        return positions
+        return list(positions)

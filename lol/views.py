@@ -1,10 +1,11 @@
 # server/lol/views.py
 from rest_framework import viewsets
 from rest_framework.response import Response
-from .models import Champion, TeamComposition
+from .models import Champion, PositionChampion, TeamComposition
 from .serializers import ChampionSerializer, TeamCompositionSerializer
 from docs.custom_docs import team_composition_list_docs
 from django.core.cache import cache
+from django.db.models import Prefetch
 
 
 class TeamCompositionViewSet(viewsets.ReadOnlyModelViewSet):
@@ -58,11 +59,12 @@ class ChampionViewSet(viewsets.ReadOnlyModelViewSet):
     """ViewSet for Champion model."""
 
     queryset = Champion.objects.order_by("name").prefetch_related(
-        "top_champion",
-        "jungle_champion",
-        "mid_champion",
-        "adc_champion",
-        "support_champion",
+        Prefetch(
+            "positionchampion_set",
+            queryset=PositionChampion.objects.only(
+                "id", "champion_id", "position", "patch_id"
+            ).select_related("patch").filter(pick_count__gt=15),
+        ),
     )
     serializer_class = ChampionSerializer
 
