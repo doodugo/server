@@ -4,6 +4,7 @@ from django.contrib import admin
 from lol.models import (
     AdcSupportComposition,
     Champion,
+    CounterRecord,
     EsportsGame,
     LoLUser,
     Match,
@@ -15,19 +16,22 @@ from lol.models import (
 )
 from django.utils.translation import gettext_lazy as _
 
+
 class CustomAdminSite(admin.AdminSite):
     site_header = "My Custom Admin"
     site_title = "Admin Portal"
     index_title = "Welcome to My Admin"
 
+
 # Custom AdminSite 인스턴스 생성
-custom_admin_site = CustomAdminSite(name='custom_admin')
+custom_admin_site = CustomAdminSite(name="custom_admin")
 custom_admin_site.register(Champion)
 custom_admin_site.register(PositionChampion)
 custom_admin_site.register(TeamComposition)
 custom_admin_site.register(EsportsGame)
 custom_admin_site.register(Match)
 custom_admin_site.register(AdcSupportComposition)
+
 
 # Register your models here.
 @admin.register(Champion)
@@ -279,8 +283,6 @@ class MatchAdmin(admin.ModelAdmin):
     get_red_composition.short_description = "Red Composition"
 
 
-
-
 @admin.register(LoLUser)
 class LoLUserAdmin(admin.ModelAdmin):
     search_fields = ["name", "tag"]
@@ -377,6 +379,31 @@ class TopJungleMidCompositionAdmin(admin.ModelAdmin):
     top_champion_name.short_description = "Top Champion"
     jungle_champion_name.short_description = "Jungle Champion"
     mid_champion_name.short_description = "Mid Champion"
+
+
+@admin.register(CounterRecord)
+class CounterRecordAdmin(admin.ModelAdmin):
+    list_display = (
+        "get_champion_a",
+        "get_champion_b",
+        "position",
+        "total_matches",
+        "win_rate_a",
+        "win_rate_b",
+    )
+    list_filter = ("position", "patch")
+    search_fields = ["champion_a__name_ko", "champion_b__name_ko"]
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        qs = qs.select_related("champion_a", "champion_b")
+        return qs
+
+    def get_champion_a(self, obj):
+        return obj.champion_a.name_ko
+
+    def get_champion_b(self, obj):
+        return obj.champion_b.name_ko
+
 
 admin.site.register(PatchVersion)
 # admin.site.register(EsportsGame, MatchAdmin)
