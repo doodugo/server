@@ -14,6 +14,10 @@ class LoLUser(models.Model):
     wins = models.IntegerField(default=0)
     losses = models.IntegerField(default=0)
 
+    class Meta:
+        verbose_name = "LoL User"  # Admin에서 나타날 이름
+        verbose_name_plural = "LoL Users"  # 복수형 설정
+        
     def __str__(self):
         return f"{self.name}#{self.tag}"
 
@@ -46,9 +50,6 @@ class Champion(models.Model):
     full_image_url = models.CharField(max_length=200, blank=True, null=True)
     icon_image_url = models.CharField(max_length=200, blank=True, null=True)
 
-    def __str__(self):
-        return self.name
-
 
 class Position(models.TextChoices):
     TOP = "TOP", "Top"
@@ -72,9 +73,6 @@ class PositionChampion(models.Model):
     position = models.CharField(max_length=20, choices=Position.choices)
     pick_count = models.IntegerField(default=0)
     win_count = models.IntegerField(default=0)
-
-    def __str__(self):
-        return str(self.champion.name)
 
     @property
     def win_rate(self):
