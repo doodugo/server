@@ -40,6 +40,12 @@ team_composition_list_docs = extend_schema(
             location=OpenApiParameter.QUERY,
             description="서포터 챔피언 ID",
         ),
+        OpenApiParameter(
+            name="exclude",
+            type={"type": "array", "items": {"type": "integer"}},
+            location=OpenApiParameter.QUERY,
+            description="제외할 챔피언 ID 리스트 (ex: ?exclude=1&exclude=2&exclude=3)",
+        ),
     ],
     responses={
         200: OpenApiResponse(

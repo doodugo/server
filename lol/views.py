@@ -7,7 +7,7 @@ from .serializers import ChampionSerializer, TeamCompositionSerializer
 from docs.custom_docs import team_composition_list_docs
 from django.core.cache import cache
 from django.db.models import Prefetch
-
+from django.db.models import Q
 
 class TeamCompositionViewSet(viewsets.ReadOnlyModelViewSet):
     """ViewSet for TeamComposition model."""
@@ -27,31 +27,59 @@ class TeamCompositionViewSet(viewsets.ReadOnlyModelViewSet):
                 "support__champion",
             )
         )
-        champion_ids = self.get_champion_ids()
-        return self.filter_team_compositions(queryset, champion_ids)
+        return self.filter_queryset(queryset)
 
     def get_champion_ids(self):
         """챔피언 ID를 가져오는 함수."""
-        return {
-            "top": self.request.query_params.get("top"),
-            "mid": self.request.query_params.get("mid"),
-            "adc": self.request.query_params.get("adc"),
-            "jungle": self.request.query_params.get("jug"),
-            "support": self.request.query_params.get("sup"),
-        }
+        query_dict = dict()
+        if self.request.query_params.get("top"):
+            query_dict["top"] = self.request.query_params.get("top")
+        if self.request.query_params.get("mid"):
+            query_dict["mid"] = self.request.query_params.get("mid")
+        if self.request.query_params.get("adc"):
+            query_dict["adc"] = self.request.query_params.get("adc")
+        if self.request.query_params.get("jug"):
+            query_dict["jungle"] = self.request.query_params.get("jug")
+        if self.request.query_params.get("sup"):
+            query_dict["support"] = self.request.query_params.get("sup")
+        return query_dict
 
-    def filter_team_compositions(self, queryset, champion_ids):
+    def get_exclude_champion_ids(self):
+        """제외할 챔피언 ID를 가져오는 함수."""
+        return self.request.query_params.getlist("exclude")
+
+    def filter_queryset(self, queryset):
         """챔피언 ID에 따라 팀 구성 필터링."""
-        for role, champion_id in champion_ids.items():
-            if champion_id:
-                queryset = queryset.filter(**{f"{role}__champion_id": champion_id})
-        return queryset
+        champion_ids = self.get_champion_ids()
+        exclude_champion_ids = self.get_exclude_champion_ids()
+        if champion_ids:
+            for role, champion_id in champion_ids.items():
+                if champion_id:
+                    queryset = queryset.filter(**{f"{role}__champion_id": champion_id})
+
+        if exclude_champion_ids:
+            queryset = queryset.exclude(
+                Q(top__champion_id__in=exclude_champion_ids)
+                | Q(jungle__champion_id__in=exclude_champion_ids)
+                | Q(mid__champion_id__in=exclude_champion_ids)
+                | Q(adc__champion_id__in=exclude_champion_ids)
+                | Q(support__champion_id__in=exclude_champion_ids)
+            )
+
+        if champion_ids or exclude_champion_ids:
+            return queryset[:3]
+
+        return queryset.order_by("-pick_count", "-win_count")[:200]
 
     @team_composition_list_docs
     def list(self, request, *args, **kwargs):
+        '''
+            파라미터를 넣지 않으면 모든 챔피언 조합을 페이지네이션 해서 반환 \n
+            파라미터를 넣으면 특정 챔피언 조합 조회 api로 사용
+        '''
         paginator = PageNumberPagination()
         paginator.page_size = 50
-        queryset = self.get_queryset().order_by("-pick_count", "-win_count")[:200]
+        queryset = self.get_queryset()
 
         top_compositions = paginator.paginate_queryset(queryset, request)
         serializer = self.get_serializer(top_compositions, many=True)
