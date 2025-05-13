@@ -79,7 +79,7 @@ class PositionChampion(models.Model):
         """Calculate win rate percentage."""
         if self.pick_count == 0:
             return 0
-        return int((self.win_count / self.pick_count) * 100)
+        return round((self.win_count / self.pick_count) * 100, 2)
 
     class Meta:
         unique_together = ["patch", "champion", "position"]
@@ -245,7 +245,7 @@ class TeamComposition(models.Model):
     def win_rate(self):
         if self.pick_count == 0:
             return 0
-        return (self.win_count / self.pick_count) * 100
+        return round((self.win_count / self.pick_count) * 100, 2)
 
 
 class Match(models.Model):
@@ -292,6 +292,12 @@ class TopJungleMidComposition(models.Model):
     def __str__(self):
         return f"({self.top.champion.name}, {self.jungle.champion.name}, {self.mid.champion.name})"
 
+    @property
+    def win_rate(self):
+        if self.pick_count == 0:
+            return 0
+        return round((self.win_count / self.pick_count) * 100, 2)
+
 
 class AdcSupportComposition(models.Model):
     patch = models.ForeignKey(
@@ -319,3 +325,9 @@ class AdcSupportComposition(models.Model):
 
     def __str__(self):
         return f"({self.adc.champion.name}, {self.support.champion.name})"
+
+    @property
+    def win_rate(self):
+        if self.pick_count == 0:
+            return 0
+        return round((self.win_count / self.pick_count) * 100, 2)

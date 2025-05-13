@@ -125,6 +125,7 @@ class PositionChampionAdmin(admin.ModelAdmin):
         "position",
         "pick_count",
         "win_count",
+        "win_rate",
     )
     list_filter = ("position",)
 
@@ -157,6 +158,7 @@ class TeamCompositionAdmin(admin.ModelAdmin):
         "support_champion_name",
         "pick_count",
         "win_count",
+        "win_rate",
     )
     list_filter = ("patch",)
 
@@ -303,6 +305,7 @@ class AdcSupportCompositionAdmin(admin.ModelAdmin):
         "support_champion_name",
         "pick_count",
         "win_count",
+        "win_rate",
     )
     list_filter = ("patch", "adc", "support")
     autocomplete_fields = ["adc", "support"]
@@ -338,6 +341,7 @@ class TopJungleMidCompositionAdmin(admin.ModelAdmin):
         "mid_champion_name",
         "pick_count",
         "win_count",
+        "win_rate",
     )
     list_filter = ("patch", "top", "jungle", "mid")
 
@@ -388,10 +392,12 @@ class CounterRecordAdmin(admin.ModelAdmin):
         "get_champion_b",
         "position",
         "total_matches",
+        "wins_a",
+        "wins_b",
         "win_rate_a",
         "win_rate_b",
     )
-    list_filter = ("position", "patch")
+    list_filter = ("position", "patch",)
     search_fields = ["champion_a__name_ko", "champion_b__name_ko"]
     def get_queryset(self, request):
         qs = super().get_queryset(request)
