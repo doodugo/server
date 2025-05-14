@@ -1,11 +1,12 @@
 import logging
+import os
 import requests
 import time
 from requests.exceptions import ConnectionError, Timeout, RequestException
 from urllib3.exceptions import NewConnectionError, MaxRetryError
 import socket
 
-LIMIT_TIME = 10  # 제한 시간 설정
+LIMIT_TIME = int(os.getenv("LIMIT_TIME", 10))
 logger = logging.getLogger(__name__)
 
 
