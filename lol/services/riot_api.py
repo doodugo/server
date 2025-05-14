@@ -109,17 +109,19 @@ class RiotApiService:
             for division in DIVISION:
                 page = 1
                 while True:
-                    data_list = self.fetch_league_entries(tier, division, page)
-                    if len(data_list) == 0:
-                        break
+                    try:
+                        data_list = self.fetch_league_entries(tier, division, page)
+                        if len(data_list) == 0:
+                            break
 
-                    for data in data_list:
-                        self.save_user_data(data)
-                        match_ids = self.get_match_ids_by_puuid(data["puuid"])
-                        for match_id in match_ids:
-                            self.get_match_detail(match_id)
-
-                    page += 1
+                        for data in data_list:
+                            self.save_user_data(data)
+                            match_ids = self.get_match_ids_by_puuid(data["puuid"])
+                            for match_id in match_ids:
+                                self.get_match_detail(match_id)
+                        page += 1
+                    except Exception as e:
+                        raise Exception(f"Error occurred during processing: tier={tier}, division={division}, page={page}") from e
 
     def handle_riot_api(self, url: str) -> dict:
         base_url = (
